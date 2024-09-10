@@ -1,0 +1,39 @@
+
+services:
+  nginx:
+    image: nginx
+    volumes:
+      - ./resources/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 8080:8080
+  gwc:
+    image: georchestra/geowebcache:latest
+    volumes:
+      - ./resources/geowebcache.xml:/mnt/geowebcache_datadir/geowebcache.xml
+      - ./resources/default.properties:/etc/georchestra/default.properties
+    entrypoint:
+      - /docker-entrypoint.sh
+    environment:
+      XMX: 1GB
+      XMS: 1GB
+      JAVA_OPTIONS: "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005"
+      GWC_DESCRIPTION: "My suppaduppa GWC service"
+      SUPERSECRET: geoserver
+    command:
+      - sh
+      - -c
+      - exec java
+        -Djava.io.tmpdir=/tmp/jetty
+        -Dgeorchestra.datadir=/etc/georchestra
+        -DGEOWEBCACHE_CONFIG_DIR=/mnt/geowebcache_datadir
+        -DGEOWEBCACHE_CACHE_DIR=/mnt/geowebcache_tiles
+        -DALLOW_ENV_PARAMETRIZATION=true
+        -XX:-UsePerfData
+        ${JAVA_OPTIONS}
+        -Djetty.httpConfig.sendServerVersion=false
+        -Djetty.jmxremote.rmiregistryhost=0.0.0.0
+        -Djetty.jmxremote.rmiserverhost=0.0.0.0  -jar /usr/local/jetty/start.jar
+    ports:
+      - "5005:5005"
+  wms:
+    image: docker.osgeo.org/geoserver:2.25.3
