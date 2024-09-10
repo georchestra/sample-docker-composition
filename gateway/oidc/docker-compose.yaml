@@ -1,0 +1,28 @@
+services:
+
+  database:
+    image: georchestra/database:latest
+
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  console:
+    image: georchestra/console:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+
+  gateway:
+    image: georchestra/gateway:latest
+    depends_on:
+      - database
+    volumes:
+      - ./datadir:/etc/georchestra
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dgeorchestra.datadir=/etc/georchestra -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005
+    ports:
+      - "8080:8080"
+      - "5005:5005"
