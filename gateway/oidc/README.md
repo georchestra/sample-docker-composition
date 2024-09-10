@@ -2,10 +2,10 @@
 
 this composition aims to provide a simple composition to debug the OIDC:
 
-An external OIDC provider is needed, and the following variables are needed:
-CLIENT_ID
-CLIENT_SECRET
-ISSUER_URL
+An external OIDC provider is needed, and the following variables are needed in `datadir/gateway/security.yaml`:
+- CLIENT_ID
+- CLIENT_SECRET
+- ISSUER_URL
 
 Please ask the PSC if you need a test account on the georchestra OIDC provider.
 
