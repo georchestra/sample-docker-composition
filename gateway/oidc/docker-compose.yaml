@@ -36,6 +36,8 @@ services:
       - rabbitmq
     volumes:
       - ./datadir:/etc/georchestra
+    env_file:
+      - .oidc-env
     environment:
       - JAVA_TOOL_OPTIONS=-Dgeorchestra.datadir=/etc/georchestra -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005
     ports:

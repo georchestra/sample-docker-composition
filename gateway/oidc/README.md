@@ -9,6 +9,11 @@ An external OIDC provider is needed, and the following variables are needed in `
 
 Please ask the PSC if you need a test account on the georchestra OIDC provider.
 
+# Env file
+
+1. Copy the `.oidc-env.sample` to `.oidc-env`
+2. Change the necessary variables
+
 # Step to reproduce
 
 1. Launch the docker composition and go to http://localhost:8080
