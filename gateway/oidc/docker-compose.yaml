@@ -1,7 +1,12 @@
+volumes:
+    smtp_maildir:
+
 services:
 
   database:
     image: georchestra/database:latest
+    ports:
+      - "5432:5432"
 
   ldap:
     image: georchestra/ldap:latest
@@ -12,13 +17,23 @@ services:
 
   console:
     image: georchestra/console:latest
+    environment:
+      - RABBITMQ_USERNAME=georchestra
+      - RABBITMQ_PASSWORD=georchestra
+      - RABBITMQ_PORT=5672
+      - JAVA_OPTIONS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005
+    depends_on:
+      - rabbitmq
     volumes:
       - ./datadir:/etc/georchestra
+    ports:
+      - "5006:5005"
 
   gateway:
     image: georchestra/gateway:latest
     depends_on:
       - database
+      - rabbitmq
     volumes:
       - ./datadir:/etc/georchestra
     environment:
@@ -26,3 +41,37 @@ services:
     ports:
       - "8080:8080"
       - "5005:5005"
+
+  rabbitmq:
+    image: docker.io/bitnami/rabbitmq:3.12
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping && rabbitmq-diagnostics -q check_local_alarms
+      interval: 60s
+      timeout: 30s
+      retries: 3
+    environment:
+      - RABBITMQ_MANAGEMENT_ALLOW_WEB_ACCESS=true
+      - RABBITMQ_USERNAME=georchestra
+      - RABBITMQ_PASSWORD=georchestra
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_LOGS=-
+
+  smtp:
+    image: camptocamp/smtp-sink:latest
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+
+  courier-imap:
+    image: camptocamp/courier-imap:latest
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+
+  webmail:
+    image: camptocamp/sqwebmail:latest
+    environment:
+      - IMAP_HOSTNAME=courier-imap
+      - SMTP_HOSTNAME=smtp-sink
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+    ports:
+      - "8081:80"
