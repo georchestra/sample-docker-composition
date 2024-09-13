@@ -1,0 +1,72 @@
+services:
+  ldap:
+    image: georchestra/ldap:latest
+    restart: always
+    ports:
+      - 3891:389
+    ulimits:
+          nofile:
+            soft: "1024"
+            hard: "1024"
+
+  # This second LDAP provides only one testoauth2 account
+  ldap2:
+    image: georchestra/ldap:latest
+    restart: always
+    volumes:
+      - ./datadir/ldap2-oauth2/load-new-user:/docker-entrypoint.d/99-load-new-user
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  gateway:
+    image: georchestra/gateway:latest
+    depends_on:
+      - ldap
+      - cas
+    volumes:
+      - ./datadir:/etc/georchestra
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dgeorchestra.datadir=/etc/georchestra -Dspring.profiles.active=docker,casoauth2 -Xmx512M -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+    restart: always
+    ports:
+      - 8090:8090
+      - 5005:5005
+
+  header:
+    image: georchestra/header:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+    environment:
+      - JAVA_OPTIONS=-Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
+      - XMS=256M
+      - XMX=512M
+    restart: always
+    ports:
+      - 10003:8080
+
+  cas:
+    image: georchestra/cas:latest
+    depends_on:
+      - ldap2
+    volumes:
+      - ./datadir:/etc/georchestra
+    environment:
+      - JAVA_OPTIONS=-Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+      - XMS=256M
+      - XMX=1G
+    ports:
+    - 8081:8080
+    - 5006:5005
+    restart: always
+
+  nginx:
+    image: nginx
+    depends_on:
+      - gateway
+      - cas
+    volumes:
+      - ./datadir/nginx-casoauth2/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - 8080:8080

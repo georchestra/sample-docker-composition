@@ -1,0 +1,12 @@
+{
+  "@class" : "org.apereo.cas.services.OidcRegisteredService",
+  "clientId": "oidc",
+  "clientSecret": "oidc",
+  "serviceId" : "^(https|http)://.*",
+  "name" : "oidc",
+  "bypassApprovalPrompt": true,
+  "id" : 3001,
+  "scopes" : [ "java.util.HashSet",
+    [ "openid", "profile", "email", "address", "phone", "offline_access", "displayName", "eduPerson" ]
+  ]
+}
