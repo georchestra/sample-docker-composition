@@ -1,10 +1,10 @@
 # About
 
-This repository aims to host some docker composition which isolate one
-particular geOrchestra component in order to allow easy debugging of said
-component.
+This repository aims to host some docker compositions which isolate one
+particular geOrchestra component or some basic usecases, in order to allow
+easy debugging of said component, hilight a bug or a particular configuration ...
 
-The main docker composition repository could have been used for such a use
+The main docker composition repository could also have been used for such a use
 case, but:
 
 1. it became more and more complex over time
@@ -20,6 +20,6 @@ When contributing, please provide:
 
 * a docker composition (obviously)
 * some e.g. curl commands to highlight a particular bug
-* Add a readme to the directory which explains the goal of the composition
+* Add a readme to the directory which explains the goal of the composition, and how to use it
 
 
