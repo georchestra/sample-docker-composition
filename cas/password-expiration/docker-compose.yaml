@@ -1,0 +1,20 @@
+services:
+  ldap:
+    image: georchestra/ldap:latest
+    environment:
+      - SLAPD_PASSWORD_MGT_POLICY=rotation
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+    volumes:
+      - ./resources/ldap/docker-entrypoint.d/99-update-password-expiration.sh:/docker-entrypoint.d/99-update-password-expiration.sh
+    ports:
+      - "3389:389"
+
+  cas:
+    image: georchestra/cas:latest
+    volumes:
+      - ./resources/datadir:/etc/georchestra
+    ports:
+      - "8080:8080"
