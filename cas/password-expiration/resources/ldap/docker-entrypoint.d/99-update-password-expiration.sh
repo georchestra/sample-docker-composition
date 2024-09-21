@@ -34,6 +34,25 @@ pwdMinAge: 0
 
 EOF
 
+echo "Adding a 2days password expiration policy"
+
+cat <<EOF | ldapadd -Dcn=admin,dc=georchestra,dc=org -w ${SLAPD_PASSWORD} -x
+dn: cn=2daysexpiration,ou=pwpolicy,dc=georchestra,dc=org
+objectClass: person
+objectClass: pwdPolicy
+objectClass: pwdPolicyChecker
+cn: default
+cn: pwpolicy
+pwdAttribute: userPassword
+sn: pwpolicy
+pwdExpireWarning: 2592000
+pwdGraceAuthNLimit: 0
+pwdMaxAge: 172800
+pwdMinAge: 0
+
+EOF
+
+
 echo "Affecting the 2seconds password expiration policy to testuser"
 
 cat <<EOF | ldapmodify -Dcn=admin,dc=georchestra,dc=org -w ${SLAPD_PASSWORD} -x
@@ -43,6 +62,18 @@ add: pwdPolicySubentry
 pwdPolicySubentry: cn=2secondsexpiration,ou=pwpolicy,dc=georchestra,dc=org
 
 EOF
+
+echo "Affecting the 2days password expiration policy to testeditor"
+
+cat <<EOF | ldapmodify -Dcn=admin,dc=georchestra,dc=org -w ${SLAPD_PASSWORD} -x
+dn: uid=testeditor,ou=users,dc=georchestra,dc=org
+changetype: modify
+add: pwdPolicySubentry
+pwdPolicySubentry: cn=2daysexpiration,ou=pwpolicy,dc=georchestra,dc=org
+
+EOF
+
+
 
 pkill slapd
 

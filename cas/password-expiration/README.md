@@ -2,7 +2,8 @@
 
 This docker composition provides a way to test the password rotation policy
 from the LDAP, and how it affects the templates on CAS when one to try to log
-in with an expired account.
+in with an expired account, or with an account on which the password is
+about to expire.
 
 # Ports
 
@@ -16,16 +17,23 @@ a georchestra/ldap is launched along with the  environment variable
 
 When the LDAP server bootstraps, a `docker-entrypoint.d` init script injects a
 new password policy which makes the passwords expiring after 2 seconds, and
-affects this new policy to the `testuser` account.
+affects this new policy to the `testuser` account. Another policy sets a
+policy to 2 days and affects it to the `testeditor` user.
 
 2 seconds is probably enough to have the passwords for the user expired before
 being able to log in as `testuser`.
+
+2 days should leave the time to get a "Warning: password is about to expire" for
+user `testeditor`.
 
 After having launched the composition, if you visit
 `http://localhost:8080/cas/login`, and try to connect as `testuser/testuser`,
 you should see a message telling you that your password expired, along with a
 link to the console (not provided by the composition) so that you could reset
 it.
+
+Connecting as `testeditor` in the 2 days timespan after having launched the
+docker composition should give you the "password is about to expire" message.
 
 # More technical details
 
