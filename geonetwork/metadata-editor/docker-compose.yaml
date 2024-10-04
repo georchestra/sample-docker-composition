@@ -1,0 +1,55 @@
+services:
+
+  database:
+    image: georchestra/database:latest
+
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.21
+    environment:
+      discovery.type: single-node
+
+  geonetwork:
+    image: georchestra/geonetwork:latest
+    environment:
+    - PGHOST=database
+    - PGPORT=5432
+    - PGDATABASE=georchestra
+    - PGUSER=georchestra
+    - PGPASSWORD=georchestra
+    - CONSOLE_HOST=console
+    - ES_HOST=elasticsearch
+    - ES_PORT=9200
+    - JAVA_OPTIONS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+    depends_on:
+    - database
+    - elasticsearch
+
+  console:
+    image: georchestra/console:latest
+    volumes:
+      - ./datadir:/etc/georchestra:ro
+
+  metadata-editor:
+    build: editor
+    ports:
+      - 8081:80
+
+  cas:
+    image: georchestra/cas:latest
+    volumes:
+      - ./datadir:/etc/georchestra:ro
+
+  proxy:
+    image: georchestra/security-proxy:latest
+    volumes:
+      - ./datadir:/etc/georchestra:ro
+    ports:
+    - 8080:8080
+    - 5005:5005
