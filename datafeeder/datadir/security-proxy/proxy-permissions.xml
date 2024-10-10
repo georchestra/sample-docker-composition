@@ -1,0 +1,10 @@
+<permissions>
+    <allowByDefault>true</allowByDefault>
+    <denied>
+        <urimatcher>
+            <!-- Note that, with the following setting,
+            all ips for local host irregardless of name will be checked -->
+            <host>localhost</host>
+        </urimatcher>
+    </denied>
+</permissions>

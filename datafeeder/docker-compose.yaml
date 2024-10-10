@@ -1,0 +1,58 @@
+services:
+  database:
+    image: georchestra/database:latest
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+  cas:
+    image: georchestra/cas:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+  elasticsearch:
+    # sudo sysctl -w vm.max_map_count=262144
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.21
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+  console:
+    image: georchestra/console:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+  geonetwork:
+    image: georchestra/geonetwork:latest
+    environment:
+    - PGHOST=database
+    - PGPORT=5432
+    - PGDATABASE=georchestra
+    - PGUSER=georchestra
+    - PGPASSWORD=georchestra
+    - CONSOLE_HOST=console
+    - ES_HOST=elasticsearch
+    - ES_PORT=9200
+    depends_on:
+    - console
+    - database
+    - elasticsearch
+  geoserver:
+    image: georchestra/geoserver:latest
+  import:
+    image: georchestra/datafeeder-frontend:latest
+  datafeeder:
+    image: georchestra/datafeeder:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+  smtp:
+    image: camptocamp/smtp-sink:latest
+  proxy:
+    image: georchestra/security-proxy:latest
+    ports:
+    - 8080:8080
+    volumes:
+    - ./datadir:/etc/georchestra
