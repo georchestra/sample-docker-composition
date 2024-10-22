@@ -12,6 +12,8 @@ services:
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.21
+    environment:
+      discovery.type: single-node
 
   console:
     image: georchestra/console:latest
@@ -19,7 +21,7 @@ services:
       - ./datadir:/etc/georchestra
 
   geonetwork:
-    image: georchestra/geonetwork:24.0.0-dev
+    image: georchestra/geonetwork:24.0.x
     environment:
     - PGHOST=database
     - PGPORT=5432
