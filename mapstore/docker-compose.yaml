@@ -1,0 +1,15 @@
+services:
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+  database:
+    image: georchestra/database:latest
+  mapstore:
+    image: geosolutionsit/mapstore2-georchestra:2024.02.00-RC1-geOrchestra
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./config:/etc/georchestra
