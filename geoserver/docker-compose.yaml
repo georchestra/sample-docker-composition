@@ -1,0 +1,25 @@
+services:
+  database:
+    image: georchestra/database:latest
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+  cas:
+    image: georchestra/cas:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+  geoserver:
+    image: georchestra/geoserver:latest
+    environment:
+    - GEOSERVER_CSRF_DISABLED=true
+    volumes:
+    - ./datadir:/etc/georchestra
+  proxy:
+    image: georchestra/security-proxy:latest
+    ports:
+    - 8080:8080
+    volumes:
+    - ./datadir:/etc/georchestra
