@@ -1,0 +1,27 @@
+services:
+  ldap:
+    image: georchestra/ldap:latest
+    ports:
+      - "3389:389"
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  database:
+    image: georchestra/database:latest
+
+  console:
+    image: georchestra/console:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+
+  # used to fake a SP / geOrchestra gateway
+  # Just open your browser on http://localhost:8080/console/
+
+  front:
+    image: nginx
+    volumes:
+      - ./datadir/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - '8080:8080'
