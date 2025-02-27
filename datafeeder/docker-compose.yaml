@@ -48,6 +48,10 @@ services:
     image: georchestra/datafeeder:latest
     volumes:
       - ./datadir:/etc/georchestra
+    ports:
+      - "5005:5005"
+    environment:
+      - JAVA_OPTS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005
   smtp:
     image: camptocamp/smtp-sink:latest
   proxy:
