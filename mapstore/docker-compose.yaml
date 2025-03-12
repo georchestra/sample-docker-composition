@@ -7,8 +7,13 @@ services:
         hard: "1024"
   database:
     image: georchestra/database:latest
+    ports:
+      - "15432:5432"
   mapstore:
     image: geosolutionsit/mapstore2-georchestra:2024.02.00-RC1-geOrchestra
+    depends_on:
+      database:
+          condition: service_healthy
     ports:
       - "8080:8080"
     volumes:
