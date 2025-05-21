@@ -23,5 +23,16 @@
       "value": "EPSG:3857"
     }
   ],
-  "thesaurusUrl": "http://localhost:8080/geonetwork/srv/api/registries/vocabularies/search?type=CONTAINS&thesaurus=external.theme.httpinspireeceuropaeutheme-theme&rows=200&q=${q}&uri=**&lang=${lang}"
+  "thesaurusUrl": "http://localhost:8080/geonetwork/srv/api/registries/vocabularies/search?type=CONTAINS&thesaurus=external.theme.httpinspireeceuropaeutheme-theme&rows=200&q=${q}&uri=**&lang=${lang}",
+  "links": [
+    "geonetwork",
+    "ogc-features",
+    {
+      "uri": "/datahub/dataset/:uuid",
+      "title": {
+        "default": "See data in Datahub",
+        "fr": "Voir le jeu de données dans datahub"
+      }
+    }
+  ]
 }
