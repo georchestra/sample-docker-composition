@@ -11,6 +11,12 @@ georchestra:
         enabled: false
       createNonExistingUsersInLDAP: true
       enableRabbitmqEvents: true
+      oidc:
+        claims:
+          provider:
+            georchestra-ext:
+              organization.path: "$.organization_id"
+              organizationUid.path: "$.organization_id"
       oauth2:
         enabled: true
       ldap:
@@ -43,7 +49,7 @@ spring:
             client-secret: ${CLIENT_SECRET}
             authorization-grant-type: authorization_code
             redirect-uri: "http://localhost:8080/login/oauth2/code/georchestra-ext"
-            scope: openid, profile, email
+            scope: openid, profile, email, organization
         provider:
           georchestra-ext:
             issuer-uri: ${ISSUER_URI}
