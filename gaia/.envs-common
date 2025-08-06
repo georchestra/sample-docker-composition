@@ -1,4 +1,4 @@
 # envs-common
-FQDN=georchestra-127-0-0-1.nip.io
+FQDN=127.0.0.1:8080
 SMTPHOST=smtp
 SMTPPORT=25

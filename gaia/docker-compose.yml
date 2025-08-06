@@ -267,7 +267,9 @@ services:
       - ./datadir/gaia/config.py:/geordash/config.py:ro
       - ./datadir/gaia/celeryconfig.py:/geordash/geordash/celeryconfig.py:ro
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
-      #- ../:/geordash
+      - ../../gaia:/geordash
+      - ./volumes/geonetwork_datadir:/mnt/geonetwork_datadir
+    
 
     ports:
       - "5002:5002"
@@ -302,7 +304,7 @@ services:
       - ./datadir/gaia/config.py:/geordash/config.py:ro
       - ./datadir/gaia/celeryconfig.py:/geordash/geordash/celeryconfig.py:ro
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro
-      #- ../:/geordash
+      - ../../gaia:/geordash
 
     environment:
       REQUESTS_CA_BUNDLE: /etc/ssl/certs/ca-certificates.crt
