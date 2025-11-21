@@ -1,0 +1,36 @@
+services:
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  database:
+    image: georchestra/database:latest
+    ports:
+      - "15432:5432"
+
+  mapstore:
+    image: georchestra/mapstore:latest
+    depends_on:
+      database:
+          condition: service_healthy
+    volumes:
+      - ./config:/etc/georchestra
+
+  gateway:
+    image: georchestra/gateway:2.0.3
+    depends_on:
+      ldap:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    volumes:
+      - ./config:/etc/georchestra
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dgeorchestra.datadir=/etc/georchestra -Dspring.profiles.active=docker -Xmx512M -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+    restart: always
+    ports:
+      - 8080:8080
+      - 5005:5005

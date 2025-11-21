@@ -1,0 +1,17 @@
+# File included by gateway.yaml to set up the spring-gateway's routes
+# target service URL's are defined in gateway.yaml (e.g. georchestra.gateway.services.<service>.target)
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: root
+          uri: no://op
+          predicates:
+            - Path=/
+          filters:
+            - RedirectTo=307, /mapstore/
+        - id: mapstore
+          uri: ${georchestra.gateway.services.mapstore.target}
+          predicates:
+            - Path=/mapstore/**

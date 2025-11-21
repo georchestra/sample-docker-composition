@@ -1,0 +1,25 @@
+# Default georchestra gateway specific configuration, always imported from application.yml
+# configure target base URL's, headers and role based access, per service name.
+# Replaces security-proxy's targets-mapping.properties, headers-mapping.properties, and security-mappings.xml
+#
+spring.config.import: security.yaml, routes.yaml, roles-mappings.yaml
+
+georchestra:
+  gateway:
+    default-headers:
+      # Default security headers to append to proxied requests
+      proxy: true
+      username: true
+      roles: true
+      org: true
+      orgname: true
+    global-access-rules:
+    - intercept-url:
+      - /**
+      anonymous: true
+    services:
+      mapstore:
+        target: ${georchestra.gateway.services.mapstore.target}
+
+georchestra.gateway.services:
+  mapstore.target: http://mapstore:8080/mapstore/
