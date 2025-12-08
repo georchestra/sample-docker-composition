@@ -1,0 +1,19 @@
+# File included by gateway.yaml to set up the spring-gateway's routes
+# target service URL's are defined in gateway.yaml (e.g. georchestra.gateway.services.<service>.target)
+
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: geonetwork
+        uri: ${georchestra.gateway.services.geonetwork.target}
+        predicates:
+        - Path=/geonetwork/**
+      - id: home
+        uri: ${georchestra.gateway.services.home.target}
+        predicates:
+        - Path=/home/**
+      - id: datahub
+        uri: ${georchestra.gateway.services.datahub.target}
+        predicates:
+        - Path=/datahub/**

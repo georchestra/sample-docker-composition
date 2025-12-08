@@ -1,0 +1,7 @@
+baseURL = 'http://localhost:8080/home/'
+languageCode = 'en-us'
+title = 'geOrchestra Hugo integration'
+theme = 'ananke'
+
+[markup.goldmark.renderer]
+unsafe=true
