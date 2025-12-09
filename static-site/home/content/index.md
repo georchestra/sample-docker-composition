@@ -15,7 +15,7 @@ Using the following code snippet in your markdwon file:
 <gn-search-input
          api-url="/geonetwork/srv/api"
          open-on-search="/datahub/search/?q=${search}"
-         open-on-select="/datahub/reuse/${uuid}"
+         open-on-select="/datahub/dataset/${uuid}"
          primary-color="#000"
          secondary-color="#fff"
          main-color="#555"
@@ -32,7 +32,7 @@ And you are done:
 <gn-search-input
          api-url="/geonetwork/srv/api"
          open-on-search="/datahub/search/?q=${search}"
-         open-on-select="/datahub/reuse/${uuid}"
+         open-on-select="/datahub/dataset/${uuid}"
          primary-color="#000"
          secondary-color="#fff"
          main-color="#555"
