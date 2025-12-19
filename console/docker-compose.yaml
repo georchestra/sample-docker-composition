@@ -3,11 +3,8 @@ services:
     image: georchestra/ldap:latest
     ports:
       - "3389:389"
-    ulimits:
-      nofile:
-        soft: "1024"
-        hard: "1024"
-
+    environment:
+      - SLAPD_ADDITIONAL_MODULES=groupofmembers,openssh,ppolicy,lastbind
   database:
     image: georchestra/database:latest
 
