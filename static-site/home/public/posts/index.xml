@@ -27,7 +27,7 @@
       <link>http://localhost:8080/home/posts/first-post/</link>
       <pubDate>Sun, 14 Jan 2024 07:07:07 +0100</pubDate>
       <guid>http://localhost:8080/home/posts/first-post/</guid>
-      <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+      <description>&lt;h1 id=&#34;introduction&#34;&gt;Introduction&lt;/h1&gt;
 &lt;p&gt;Helloworld !&lt;/p&gt;</description>
     </item>
   </channel>

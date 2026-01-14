@@ -5,6 +5,12 @@ spring:
   cloud:
     gateway:
       routes:
+      - id: rewrite-index-to-home
+        uri: http://home:8080/
+        predicates:
+        - Path=/
+        filters:
+        - RewritePath=/, /home/
       - id: geonetwork
         uri: ${georchestra.gateway.services.geonetwork.target}
         predicates:
