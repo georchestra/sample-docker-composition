@@ -3,6 +3,19 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>http://localhost:8080/home/</loc>
+    <lastmod>2026-01-13T07:07:07+01:00</lastmod>
+  </url><url>
+    <loc>http://localhost:8080/home/posts/</loc>
+    <lastmod>2026-01-13T07:07:07+01:00</lastmod>
+  </url><url>
+    <loc>http://localhost:8080/home/posts/latest-news/</loc>
+    <lastmod>2026-01-13T07:07:07+01:00</lastmod>
+  </url><url>
+    <loc>http://localhost:8080/home/posts/second-post/</loc>
+    <lastmod>2026-01-12T07:07:07+01:00</lastmod>
+  </url><url>
+    <loc>http://localhost:8080/home/posts/first-post/</loc>
+    <lastmod>2024-01-14T07:07:07+01:00</lastmod>
   </url><url>
     <loc>http://localhost:8080/home/categories/</loc>
   </url><url>

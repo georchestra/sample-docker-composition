@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Posts on geOrchestra Hugo integration</title>
+    <link>http://localhost:8080/home/posts/</link>
+    <description>Recent content in Posts on geOrchestra Hugo integration</description>
+    <generator>Hugo -- 0.152.2</generator>
+    <language>en-us</language>
+    <lastBuildDate>Tue, 13 Jan 2026 07:07:07 +0100</lastBuildDate>
+    <atom:link href="http://localhost:8080/home/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Version 26 is out !</title>
+      <link>http://localhost:8080/home/posts/latest-news/</link>
+      <pubDate>Tue, 13 Jan 2026 07:07:07 +0100</pubDate>
+      <guid>http://localhost:8080/home/posts/latest-news/</guid>
+      <description>&lt;p&gt;Get it while it&amp;rsquo;s hot !&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>Second Post</title>
+      <link>http://localhost:8080/home/posts/second-post/</link>
+      <pubDate>Mon, 12 Jan 2026 07:07:07 +0100</pubDate>
+      <guid>http://localhost:8080/home/posts/second-post/</guid>
+      <description>&lt;p&gt;Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.&lt;/p&gt;</description>
+    </item>
+    <item>
+      <title>My First Post</title>
+      <link>http://localhost:8080/home/posts/first-post/</link>
+      <pubDate>Sun, 14 Jan 2024 07:07:07 +0100</pubDate>
+      <guid>http://localhost:8080/home/posts/first-post/</guid>
+      <description>&lt;h2 id=&#34;introduction&#34;&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Helloworld !&lt;/p&gt;</description>
+    </item>
+  </channel>
+</rss>

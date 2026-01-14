@@ -39,3 +39,5 @@ And you are done:
          background-color="#fdfbff"
          main-font="'Inter', sans-serif"
          title-font="'DM Serif Display', serif"></gn-search-input>
+
+# blogposts
