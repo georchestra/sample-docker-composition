@@ -11,6 +11,11 @@ services:
     image: georchestra/console:latest
     volumes:
       - ./datadir:/etc/georchestra
+    depends_on:
+      ldap:
+        condition: service_healthy
+      database:
+        condition: service_healthy
 
   # used to fake a SP / geOrchestra gateway
   # Just open your browser on http://localhost:8080/console/
@@ -21,3 +26,5 @@ services:
       - ./datadir/nginx/nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - '8080:8080'
+    depends_on:
+      - console
