@@ -1,0 +1,35 @@
+services:
+
+  database:
+    image: georchestra/database:latest
+
+  ldap:
+    image: georchestra/ldap:latest
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  cas:
+    image: georchestra/cas:latest
+    volumes:
+      - ./datadir:/etc/georchestra:ro
+
+  echo:
+    image: mejatos/request-headers
+
+  proxy:
+    build: ./security-proxy
+    environment:
+      - JAVA_OPTIONS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+    volumes:
+      - ./datadir:/etc/georchestra:ro
+    deploy:
+      replicas: 2
+
+  frontend:
+    image: nginx
+    volumes:
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+    - 8080:80
