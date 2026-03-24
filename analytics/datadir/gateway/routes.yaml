@@ -9,6 +9,10 @@ spring:
           uri: ${georchestra.gateway.services.geoserver.target}
           predicates:
             - Path=/geoserver/**
+        - id: console
+          uri: ${georchestra.gateway.services.console.target}
+          predicates:
+            - Path=/console/**
         - id: superset
           uri: ${georchestra.gateway.services.superset.target}
           predicates:

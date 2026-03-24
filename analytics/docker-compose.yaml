@@ -4,7 +4,11 @@ include:
 
 services:
   database:
-    image: georchestra/database:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.georchestra-database
+    ports:
+      - "5432:5432"
   ldap:
     image: georchestra/ldap:latest
     ulimits:
@@ -12,8 +16,13 @@ services:
         soft: "1024"
         hard: "1024"
 
+  console:
+    image: georchestra/console:latest
+    volumes:
+      - ./datadir:/etc/georchestra
+
   gateway:
-    image: georchestra/gateway:latest-debug
+    image: georchestra/gateway:latest
     environment:
       JAVA_TOOL_OPTIONS: >
         -javaagent:/etc/georchestra/gateway/libs/opentelemetry-javaagent.jar
