@@ -34,7 +34,7 @@ georchestra:
       geoserver:
         target: http://geoserver:8080/geoserver/
       superset:
-        target: http://superset_app:8088/superset/
+        target: http://superset:8088/superset/
 
 ---
 # docker profile, sets backend services target URLs to match default docker-compose host names and ports
