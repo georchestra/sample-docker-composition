@@ -1,0 +1,51 @@
+include:
+  - docker-compose.superset.yaml
+  - docker-compose.analytics.yml
+
+services:
+  database:
+    build:
+      context: .
+      dockerfile: Dockerfile.georchestra-database
+    ports:
+      - "5432:5432"
+  ldap:
+    build:
+      context: .
+      dockerfile: Dockerfile.ldap
+    ulimits:
+      nofile:
+        soft: "1024"
+        hard: "1024"
+
+  console:
+    image: georchestra/console:25.0.x
+    volumes:
+      - ./datadir:/etc/georchestra
+
+  gateway:
+    image: georchestra/gateway:latest
+    environment:
+      JAVA_TOOL_OPTIONS: >
+        -javaagent:/etc/georchestra/gateway/libs/opentelemetry-javaagent.jar
+        -Dotel.javaagent.enabled=true
+        -Dotel.exporter.otlp.protocol=grpc
+        -Dotel.exporter.otlp.endpoint=http://vector:4317
+        -Dotel.instrumentation.logback-appender.experimental.capture-mdc-attributes=*
+        -Dotel.traces.exporter=none
+        -Dotel.metrics.exporter=none
+        -Dotel.logs.exporter=otlp
+    ports:
+      - 8080:8080
+    volumes:
+      - ./datadir:/etc/georchestra
+
+  geoserver:
+    image: georchestra/geoserver:latest
+    environment:
+    - GEOSERVER_CSRF_DISABLED=true
+    - JAVA_OPTIONS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
+    volumes:
+      - ./datadir:/etc/georchestra
+    ports:
+      - "5005:5005"
