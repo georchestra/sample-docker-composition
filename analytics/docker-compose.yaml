@@ -10,14 +10,16 @@ services:
     ports:
       - "5432:5432"
   ldap:
-    image: georchestra/ldap:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ldap
     ulimits:
       nofile:
         soft: "1024"
         hard: "1024"
 
   console:
-    image: georchestra/console:latest
+    image: georchestra/console:25.0.x
     volumes:
       - ./datadir:/etc/georchestra
 
