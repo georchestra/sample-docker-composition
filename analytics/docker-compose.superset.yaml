@@ -119,6 +119,7 @@ services:
         ]
     environment:
       SUPERSET_LOG_LEVEL: "${SUPERSET_LOG_LEVEL:-info}"
+      CELERY_BROKER_URL: "redis://superset_redis:6379/0"
 
   superset-worker-beat:
     image: *superset-image
