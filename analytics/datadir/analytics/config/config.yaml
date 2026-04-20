@@ -1,0 +1,29 @@
+title: "Analytics CLI config file"
+
+performance:
+  # Publish in DB by batches
+  batch_size: 100
+
+database:
+  drivername: "postgresql"
+  host: "timescaledb"
+  port: "5432"
+  database: "analytics"
+#  schema: analytics
+  username: "tsdb"
+  password: !ENV "${DB_SECRET:secret}"
+
+app_processors:
+  geoserver:
+    infer_is_tiled: true
+    infer_is_download: true
+    download_formats:
+      vector:
+        # List of formats with a human-friendly label. Keys (format name) should match the WFS Getfeature supported
+        # outputFormats but *in lowercase*
+        shape-zip: "Shapefile"
+        "application/json": "JSON"
+        "application/geo+json": "GEOJSON"
+        csv: "CSV"
+        excel: "Excel"
+        excel2007: "Excel"
