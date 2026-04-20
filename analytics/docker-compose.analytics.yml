@@ -31,10 +31,6 @@ services:
       - 5433:5432
     env_file:
       - .envs-analytics
-#    environment:
-#      - POSTGRES_DB=analytics
-#      - POSTGRES_USER=tsdb
-#      - POSTGRES_PASSWORD=password
     volumes:
       - timescaledb_data:/var/lib/postgresql/data
       - ./datadir/analytics/db.entrypoints.d:/docker-entrypoint-initdb.d/:ro
