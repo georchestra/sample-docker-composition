@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE Configure PUBLIC "-//Jetty//Configure//EN" "http://www.eclipse.org/jetty/configure.dtd">
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+    <New id="GlobalHikariDS" class="org.eclipse.jetty.plus.jndi.Resource">
+        <Arg></Arg>
+        <Arg>jdbc/sessions</Arg>
+        <Arg>
+            <New class="com.zaxxer.hikari.HikariDataSource">
+                <Arg>
+                    <New class="com.zaxxer.hikari.HikariConfig">
+                      <Set name="driverClassName">org.postgresql.Driver</Set>
+                      <Set name="jdbcUrl">jdbc:postgresql://database:5432/georchestra</Set>
+                      <Set name="username">georchestra</Set>
+                      <Set name="password">georchestra</Set>
+                      <Set name="maximumPoolSize">15</Set>
+                      <Set name="minimumIdle">5</Set>
+                      <Set name="idleTimeout">60000</Set>
+                      <Set name="connectionTimeout">30000</Set>
+                    </New>
+                </Arg>
+            </New>
+        </Arg>
+    </New>
+</Configure>
