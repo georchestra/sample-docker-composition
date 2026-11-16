@@ -1,0 +1,304 @@
+# POC: geOrchestra gateway authenticating against Keycloak (OIDC).
+#
+#  - http://localhost:8080/       -> gateway, "/" routed to the whoami app
+#  - http://localhost:8180/admin  -> Keycloak admin console (admin / admin)
+#
+# See README.md.
+
+volumes:
+  keycloak_data:
+  postgresql_data:
+  ldap_data:
+  ldap_config:
+  geoserver_datadir:
+  geoserver_geodata:
+  geoserver_tiles:
+  geoserver_native_libs:
+  geonetwork_datadir:
+  esdata:
+  datadb_data:
+
+secrets:
+  slapd_password:
+    file: ./secrets/slapd_password.txt
+
+services:
+
+  # ---------------------------------------------------------------- identity
+
+  keycloak:
+    # quay.io/keycloak/keycloak:26.8.1 + the geOrchestra organization extension
+    build: ./keycloak
+    image: poc-keycloak/keycloak:26.8.1
+    command: ["start-dev", "--import-realm"]
+    depends_on:
+      ldap:
+        condition: service_healthy
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # Frontend URL (browser) is localhost:8180, the gateway uses the
+      # backchannel (http://keycloak:8080) for token / userinfo / jwks.
+      KC_HOSTNAME: http://localhost:8180
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      # Keycloak database (dev H2), persisted: the realm is only imported when it does not exist yet
+      - keycloak_data:/opt/keycloak/data/h2
+      - ./keycloak/georchestra-realm.json:/opt/keycloak/data/import/georchestra-realm.json:ro
+    ports:
+      - "8180:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    restart: always
+
+  # One-shot: imports all LDAP users, roles (ou=roles) and organizations (ou=orgs)
+  # into Keycloak (otherwise created lazily, at login), and maps the organizations'
+  # SIRET to their group for ProConnect users. Users are then re-synchronized
+  # periodically by Keycloak (see the realm). Re-run it after adding roles, orgs or
+  # SIRETs in LDAP: docker compose run --rm keycloak-ldap-sync
+  keycloak-ldap-sync:
+    image: python:3.13-alpine
+    command: ["sh", "-c", "pip install -q --root-user-action=ignore ldap3 && python /sync-ldap.py"]
+    environment:
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_ADMIN_USERNAME: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KEYCLOAK_REALM: georchestra
+      # SIRET (orgUniqueId) -> organization mappers of the ProConnect identity provider
+      PROCONNECT_ALIAS: proconnect
+      LDAP_URL: ldap://ldap:389
+      LDAP_BIND_DN: cn=admin,dc=georchestra,dc=org
+      LDAP_BIND_PASSWORD: secret
+      LDAP_ORGS_DN: ou=orgs,dc=georchestra,dc=org
+    volumes:
+      - ./keycloak/sync-ldap.py:/sync-ldap.py:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      ldap:
+        condition: service_healthy
+
+  gateway:
+    image: georchestra/gateway:latest
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      ldap:
+        condition: service_healthy
+    volumes:
+      - ./datadir:/etc/georchestra
+    environment:
+      - JAVA_TOOL_OPTIONS=-Dgeorchestra.datadir=/etc/georchestra
+    env_file:
+      - ./envs/.envs-common
+      - ./envs/.envs-ldap
+      - ./envs/.envs-hosts
+      - ./envs/.envs-database-georchestra
+    ports:
+      - "8080:8080"
+    restart: always
+
+  # Static page displaying the result of the gateway's /whoami + login/logout link
+  whoami-app:
+    image: nginx:alpine
+    volumes:
+      - ./whoami-app/index.html:/usr/share/nginx/html/index.html:ro
+    restart: always
+
+  # ---------------------------------------------------- geOrchestra backends
+
+  database:
+    image: georchestra/database:latest
+    env_file:
+      - ./envs/.envs-database-georchestra
+    volumes:
+      - postgresql_data:/var/lib/postgresql
+    restart: always
+    ports:
+      - "5432:5432"
+
+  # geOrchestra LDAP: user store federated in Keycloak (users, ou=roles as realm
+  # roles, ou=orgs as groups). Also read by GeoServer's LDAP role service.
+  ldap:
+    image: georchestra/ldap:latest
+    secrets:
+      - slapd_password
+    environment:
+      - SLAPD_ORGANISATION=georchestra
+      - SLAPD_DOMAIN=georchestra.org
+      - SLAPD_PASSWORD_FILE=/run/secrets/slapd_password
+      - SLAPD_PASSWORD=
+      - SLAPD_LOG_LEVEL=32768
+      - RUN_AS_UID=0
+      - RUN_AS_GID=0
+      - LDAPHOST=localhost
+    env_file:
+      - ./envs/.envs-ldap
+    volumes:
+      - ldap_data:/var/lib/ldap
+      - ldap_config:/etc/ldap
+    ulimits:
+      nofile:
+        soft: 1024
+        hard: 1024
+    restart: always
+    ports:
+      - "389:389"
+
+  # ------------------------------------------------------------- GeoServer
+
+  geoserver:
+    image: georchestra/geoserver:latest
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8080/geoserver/web/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      ldap:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+    volumes:
+      - ./datadir:/etc/georchestra
+      - geoserver_datadir:/mnt/geoserver_datadir
+      - geoserver_geodata:/mnt/geoserver_geodata
+      - geoserver_tiles:/mnt/geoserver_tiles
+      - geoserver_native_libs:/mnt/geoserver_native_libs
+    environment:
+      - JAVA_OPTIONS=-Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
+      - XMS=256M
+      - XMX=2G
+    env_file:
+      - ./envs/.envs-database-georchestra
+      - ./envs/.envs-database-datafeeder
+    restart: always
+
+  # ------------------------------------------------ GeoNetwork + Elasticsearch
+
+  geonetwork:
+    # Image built from the geonetwork "feat/keycloak-accounts-source" branch
+    # (Keycloak accounts source), see README.md
+    image: ${GEONETWORK_IMAGE:-georchestra/geonetwork:keycloak-accounts-source}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -f http://localhost:8080/geonetwork/srv/eng/catalog.search >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./datadir:/etc/georchestra
+      - geonetwork_datadir:/mnt/geonetwork_datadir
+    environment:
+      - JAVA_OPTIONS=-Duser.home=/tmp/jetty -Dgeorchestra.datadir=/etc/georchestra -Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
+      - XMS=256M
+      - XMX=2G
+    env_file:
+      - ./envs/.envs-hosts
+      - ./envs/.envs-database-georchestra
+      - ./envs/.envs-elastic
+    restart: always
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.13
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -u elastic:$$ELASTIC_PASSWORD -s -f http://localhost:9200/_cat/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    env_file:
+      - ./envs/.envs-elastic
+    environment:
+      discovery.type: single-node
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    restart: always
+
+  # ------------------------------------------- Datafeeder (local executor, no airflow)
+  # Lightweight datafeeder for demo purpose only: processing runs inside the
+  # backend container.
+
+  datadb:
+    image: postgis/postgis
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: postgres
+    volumes:
+      - datadb_data:/var/lib/postgresql/data
+    configs:
+      - source: datadb_init_sql
+        target: /docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+    restart: always
+
+  datafeeder-backend:
+    # Built from the datafeeder "feat/keycloak-directory" branch:
+    #   docker build -f apps/backend/Dockerfile --target local-executor \
+    #     -t georchestra/datafeeder-python-backend:keycloak-directory-local-executor .
+    image: georchestra/datafeeder-python-backend:keycloak-directory-local-executor
+    volumes:
+      - ./datadir:/etc/georchestra
+    environment:
+      - DATADIR=/etc/georchestra
+      - DEBUG=true
+      - BACKEND_INTERNAL_URL=http://localhost:8000
+      - TASK_EXECUTOR=LOCAL
+      # Organizations / roles / users from Keycloak instead of the console
+      - DIRECTORY_PROVIDER=keycloak
+      - KEYCLOAK_INTERNAL_URL=http://keycloak:8080
+      - KEYCLOAK_REALM=georchestra
+      - KEYCLOAK_CLIENT_ID=datafeeder
+      - KEYCLOAK_CLIENT_SECRET=datafeeder-secret
+      # organization code = "cn" group attribute, the group name being the organization name
+      - KEYCLOAK_ORG_CODE_ATTRIBUTE=cn
+      # only groups flagged "Est un organisme" are organizations
+      - KEYCLOAK_ORG_FLAG_ATTRIBUTE=isOrganization
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      database:
+        condition: service_healthy
+      datadb:
+        condition: service_healthy
+    env_file:
+      - ./envs/.envs-common
+      - ./envs/.envs-ldap
+      - ./envs/.envs-hosts
+      - ./envs/.envs-database-georchestra
+    restart: always
+
+  datafeeder-frontend:
+    image: georchestra/datafeeder-python-frontend:latest
+    environment:
+      - ENABLE_GEORCHESTRA_HEADER=true
+    restart: always
+
+configs:
+  datadb_init_sql:
+    content: |
+      CREATE EXTENSION IF NOT EXISTS postgis;
+      CREATE SCHEMA IF NOT EXISTS data;
+      CREATE SCHEMA IF NOT EXISTS staging;
