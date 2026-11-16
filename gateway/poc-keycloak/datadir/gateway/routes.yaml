@@ -1,0 +1,41 @@
+# Routes of the Keycloak POC.
+# "/" goes straight to the whoami app (a static page calling the gateway's /whoami).
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+          - id: whoami
+            uri: ${georchestra.gateway.services.whoami.target}
+            predicates:
+            - Path=/,/index.html
+          - id: geonetwork
+            uri: ${georchestra.gateway.services.geonetwork.target}
+            predicates:
+            - Path=/geonetwork/**
+          - id: geoserver
+            uri: ${georchestra.gateway.services.geoserver.target}
+            predicates:
+            - Path=/geoserver/**
+          - id: datafeeder-backend
+            uri: ${georchestra.gateway.services.datafeeder-backend.target}
+            predicates:
+            - Path=/datafeeder-backend/**,/openapi.json
+            filters:
+            - RewritePath=/datafeeder-backend/(?<segment>.*),/$\{segment}
+          - id: datafeeder-frontend
+            uri: ${georchestra.gateway.services.datafeeder-frontend.target}
+            predicates:
+            - Path=/dataset/**
+            filters:
+            # https://github.com/spring-cloud/spring-cloud-gateway/issues/1748
+            - RewritePath=/dataset,/dataset/
+
+georchestra.gateway.services:
+  whoami.target: http://whoami-app:80/
+  geonetwork.target: http://geonetwork:8080/geonetwork/
+  geoserver.target: http://geoserver:8080/geoserver/
+  datafeeder-backend.target: http://datafeeder-backend:8000/
+  datafeeder-frontend.target: http://datafeeder-frontend:8080/

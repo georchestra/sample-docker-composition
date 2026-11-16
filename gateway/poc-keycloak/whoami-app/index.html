@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>geOrchestra gateway - whoami</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem auto; max-width: 960px; padding: 0 1rem; color: #222; }
+    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+    .status { font-weight: 600; }
+    .anonymous { color: #a15c00; }
+    .connected { color: #1b7a32; }
+    a.button { display: inline-block; padding: .5rem 1rem; border-radius: 4px; text-decoration: none; color: #fff; background: #4d7ec2; }
+    a.button.logout { background: #c24d4d; }
+    nav a { margin-right: 1rem; }
+    pre { background: #f4f4f4; padding: 1rem; overflow: auto; border-radius: 4px; font-size: .85rem; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+    dt { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>whoami</h1>
+    <div>
+      <span id="status" class="status">…</span>
+      <a id="action" class="button" href="/login">Login</a>
+    </div>
+  </header>
+
+  <nav>
+    <a href="/geonetwork/">GeoNetwork</a>
+    <a href="/geoserver/web/">GeoServer</a>
+    <a href="/dataset/">Datafeeder</a>
+    <a href="http://localhost:8180/realms/georchestra/account">Mon compte (Keycloak)</a>
+  </nav>
+
+  <h2>Utilisateur</h2>
+  <dl id="summary"></dl>
+
+  <h2>Réponse brute de <code>/whoami</code></h2>
+  <pre id="raw">Chargement…</pre>
+
+  <script>
+    const fields = [
+      ['Username', 'username'], ['Prénom', 'firstName'], ['Nom', 'lastName'],
+      ['Email', 'email'], ['Organisation', 'organization'], ['Rôles', 'roles'],
+      ['OAuth2 provider', 'oauth2Provider'], ['OAuth2 uid', 'oauth2Uid'],
+    ];
+
+    fetch('/whoami', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('raw').textContent = JSON.stringify(data, null, 2);
+        const user = data.GeorchestraUser;
+        const status = document.getElementById('status');
+        const action = document.getElementById('action');
+        if (user) {
+          status.textContent = `Connecté : ${user.username}`;
+          status.className = 'status connected';
+          action.textContent = 'Logout';
+          action.href = '/logout';
+          action.classList.add('logout');
+          const dl = document.getElementById('summary');
+          for (const [label, key] of fields) {
+            const value = user[key];
+            if (value === undefined || value === null) continue;
+            const dt = document.createElement('dt');
+            dt.textContent = label;
+            const dd = document.createElement('dd');
+            dd.textContent = Array.isArray(value) ? value.join(', ') : value;
+            dl.append(dt, dd);
+          }
+        } else {
+          status.textContent = 'Anonyme';
+          status.className = 'status anonymous';
+        }
+      })
+      .catch(err => {
+        document.getElementById('raw').textContent = 'Erreur lors de l\'appel à /whoami : ' + err;
+      });
+  </script>
+</body>
+</html>

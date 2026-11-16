@@ -1,0 +1,6 @@
+# envs-database-datafeeder
+POSTGRES_DATA_HOST=datadb
+POSTGRES_DATA_DB=postgres
+POSTGRES_DATA_PORT=5432
+POSTGRES_DATA_USER=postgres
+POSTGRES_DATA_PASSWORD=mypassword

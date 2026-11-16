@@ -1,0 +1,139 @@
+diff --git a/js/apps/admin-ui/src/groups/GroupsModal.tsx b/js/apps/admin-ui/src/groups/GroupsModal.tsx
+index 075c9b5..c5c09ed 100644
+--- a/js/apps/admin-ui/src/groups/GroupsModal.tsx
++++ b/js/apps/admin-ui/src/groups/GroupsModal.tsx
+@@ -10,17 +10,22 @@ import {
+   AlertVariant,
+   Button,
+   ButtonVariant,
++  Checkbox,
+   Form,
++  FormGroup,
+   Modal,
+   ModalVariant,
+ } from "@patternfly/react-core";
+ import { useGroupResource } from "../context/group-resource/GroupResourceContext";
+ import { useState } from "react";
+-import { FormProvider, useForm } from "react-hook-form";
++import { Controller, FormProvider, useForm } from "react-hook-form";
+ import { useTranslation } from "react-i18next";
+ import { useAdminClient } from "../admin-client";
+ import useIsFeatureEnabled, { Feature } from "../utils/useIsFeatureEnabled";
+ 
++/** geOrchestra: group attribute flagging an organization ("Est un organisme") */
++const ORGANIZATION_ATTRIBUTE = "isOrganization";
++
+ type GroupsModalProps = {
+   id?: string;
+   rename?: GroupRepresentation;
+@@ -54,15 +59,37 @@ export const GroupsModal = ({
+   const isFeatureEnabled = useIsFeatureEnabled();
+   const [duplicateGroupDetails, setDuplicateGroupDetails] =
+     useState<GroupRepresentation | null>(null);
++  // geOrchestra: the edited group with its attributes (rename may come without them)
++  const [renamedGroup, setRenamedGroup] = useState<GroupRepresentation>();
++  const isOrganization = (group?: GroupRepresentation) =>
++    group?.attributes?.[ORGANIZATION_ATTRIBUTE]?.[0] === "true";
++  // only top-level groups can be organizations
++  const canBeOrganization = !duplicateId && (rename ? !rename.parentId : !id);
+ 
+   const form = useForm({
+     defaultValues: {
+       name: rename?.name || "",
+       description: rename?.description || "",
++      isOrganization: isOrganization(rename),
+     },
+   });
+   const { handleSubmit, formState } = form;
+ 
++  useFetch(
++    async () => (rename?.id ? groups.findOne({ id: rename.id }) : undefined),
++    (group) => {
++      if (group) {
++        setRenamedGroup(group);
++        form.reset({
++          name: group.name || "",
++          description: group.description || "",
++          isOrganization: isOrganization(group),
++        });
++      }
++    },
++    [rename?.id],
++  );
++
+   useFetch(
+     async () => {
+       if (duplicateId) {
+@@ -233,18 +260,40 @@ export const GroupsModal = ({
+     }
+   };
+ 
+-  const submitForm = async (group: GroupRepresentation) => {
++  const submitForm = async (
++    values: GroupRepresentation & { isOrganization?: boolean },
++  ) => {
++    const { isOrganization: organization, ...group } = values;
+     group.name = group.name?.trim();
+ 
+     try {
+       if (duplicateId && duplicateGroupDetails) {
+         await duplicateGroup(duplicateGroupDetails, group.name);
+       } else if (!id) {
+-        await groups.create(group);
++        await groups.create(
++          organization
++            ? { ...group, attributes: { [ORGANIZATION_ATTRIBUTE]: ["true"] } }
++            : group,
++        );
+       } else if (rename) {
++        const current = renamedGroup ?? rename;
++        const attributes = { ...(current.attributes ?? {}) };
++        if (canBeOrganization) {
++          if (organization) {
++            attributes[ORGANIZATION_ATTRIBUTE] = ["true"];
++          } else if (attributes[ORGANIZATION_ATTRIBUTE]) {
++            // unchecked: no longer an organization (deleted from LDAP and the dropdown)
++            attributes[ORGANIZATION_ATTRIBUTE] = ["false"];
++          }
++        }
+         await groups.update(
+           { id },
+-          { ...rename, name: group.name, description: group.description },
++          {
++            ...current,
++            name: group.name,
++            description: group.description,
++            attributes,
++          },
+         );
+       } else {
+         await groups.updateChildGroup({ id }, group);
+@@ -318,6 +367,28 @@ export const GroupsModal = ({
+             autoFocus
+           />
+           <TextControl name="description" label={t("description")} />
++          {canBeOrganization && (
++            <FormGroup label="Organisme" fieldId="isOrganization">
++              <Controller
++                name="isOrganization"
++                control={form.control}
++                render={({ field }) => (
++                  <Checkbox
++                    id="isOrganization"
++                    data-testid="isOrganization"
++                    label="Est un organisme"
++                    description={
++                      isOrganization(renamedGroup) && !field.value
++                        ? "Décoché : l'organisme sera supprimé (LDAP, liste « Organisme » des utilisateurs). Le groupe et ses membres restent."
++                        : "Un organisme est proposé dans la liste « Organisme » des utilisateurs et écrit dans LDAP."
++                    }
++                    isChecked={!!field.value}
++                    onChange={(_event, checked) => field.onChange(checked)}
++                  />
++                )}
++              />
++            </FormGroup>
++          )}
+         </Form>
+       </FormProvider>
+     </Modal>

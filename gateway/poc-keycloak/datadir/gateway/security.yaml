@@ -1,0 +1,89 @@
+georchestra:
+  gateway:
+    security:
+      header-authentication:
+        enabled: false
+      # Users log in through Keycloak (LDAP federated in Keycloak). The gateway
+      # keeps its LDAP connection for HTTP Basic (e.g. datafeeder -> GeoServer),
+      # but does not create accounts: they already live in the LDAP.
+      createNonExistingUsersInLDAP: false
+      # No LDAP login form: /login redirects straight to Keycloak.
+      disableLdapFormLogin: true
+      # Keep the Keycloak (= LDAP) username as is, instead of "keycloak_<username>"
+      disableUidTransformation: keycloak
+      oauth2:
+        enabled: true
+      oidc:
+        config:
+          provider:
+            keycloak:
+              orgNameResolvers:
+                - identifier
+                - UNKNOWN_ORG
+        claims:
+          provider:
+            keycloak:
+              email.path: "$.email"
+              givenName.path: "$.given_name"
+              familyName.path: "$.family_name"
+              # Keycloak groups = geOrchestra orgs (LDAP ou=orgs), first one is used
+              organization.path: "$.organization"
+              # Keycloak realm roles = geOrchestra roles (LDAP ou=roles), sent with the
+              # "ROLE_" prefix expected by the gateway access rules and the backends.
+              # group_roles: one ROLE_GRP_<CODE> per Keycloak group of the user (mapper
+              # "geOrchestra group roles"), used by the GeoServer layer rules datafeeder writes
+              roles:
+                json.path:
+                  - "$.roles"
+                  - "$.group_roles"
+                uppercase: true
+                normalize: true
+                append: true
+      ldap:
+        default:
+          enabled: true
+          extended: true
+          url: ldap://${ldapHost:localhost}:${ldapPort:389}/
+          baseDn: ${ldapBaseDn:dc=georchestra,dc=org}
+          adminDn: ${ldapAdminDn:cn=admin,dc=georchestra,dc=org}
+          adminPassword: ${ldapAdminPassword:secret}
+          users:
+            rdn: ${ldapUsersRdn:ou=users}
+            searchFilter: ${ldapUserSearchFilter:(uid={0})}
+            pendingUsersSearchBaseDN: ou=pendingusers
+            protectedUsers: geoserver_privileged_user
+          roles:
+            rdn: ${ldapRolesRdn:ou=roles}
+            searchFilter: ${ldapRolesSearchFilter:(member={0})}
+          orgs:
+            rdn: ${ldapOrgsRdn:ou=orgs}
+            protectedRoles: ADMINISTRATOR, GN_.*, ORGADMIN, REFERENT, USER, SUPERUSER
+
+# Keycloak OIDC client.
+#
+# The browser reaches Keycloak on http://localhost:8180 while the gateway
+# reaches it on http://keycloak:8080 (docker network). Keycloak is started with
+# KC_HOSTNAME=http://localhost:8180 + KC_HOSTNAME_BACKCHANNEL_DYNAMIC=true, so
+# endpoints are declared explicitly instead of using issuer-uri discovery
+# (which would require "localhost:8180" to be reachable from the container).
+# end-session-uri is a gateway extension enabling RP-initiated logout.
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-name: Keycloak
+            client-id: ${KEYCLOAK_CLIENT_ID:georchestra-gateway}
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:georchestra-gateway-secret}
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+            scope: openid, profile, email
+        provider:
+          keycloak:
+            authorization-uri: ${KEYCLOAK_PUBLIC_URL:http://localhost:8180}/realms/georchestra/protocol/openid-connect/auth
+            end-session-uri: ${KEYCLOAK_PUBLIC_URL:http://localhost:8180}/realms/georchestra/protocol/openid-connect/logout
+            token-uri: ${KEYCLOAK_INTERNAL_URL:http://keycloak:8080}/realms/georchestra/protocol/openid-connect/token
+            jwk-set-uri: ${KEYCLOAK_INTERNAL_URL:http://keycloak:8080}/realms/georchestra/protocol/openid-connect/certs
+            user-info-uri: ${KEYCLOAK_INTERNAL_URL:http://keycloak:8080}/realms/georchestra/protocol/openid-connect/userinfo
+            user-name-attribute: preferred_username
