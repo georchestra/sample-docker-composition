@@ -7,6 +7,8 @@ required=(
   config/georchestra/default.properties
   config/georchestra/gateway/gateway.yaml
   config/georchestra/gateway/routes.yaml
+  config/georchestra/datafeeder/datafeeder.env
+  config/database/datafeeder-init.sql
   config/maelstro/config.yaml
   env/common.env
   env/database-georchestra.env

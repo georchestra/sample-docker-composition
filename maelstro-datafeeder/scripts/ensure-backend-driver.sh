@@ -4,6 +4,10 @@ set -euo pipefail
 task_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 compose="${task_dir}/scripts/compose.sh"
 
+# Temporary workaround for the current maelstro-backend image: it ships with
+# SQLAlchemy 2.1 and psycopg2, while its unqualified postgresql:// URL makes
+# SQLAlchemy load psycopg v3. Remove this once the image either includes
+# psycopg v3 or explicitly selects the psycopg2 driver.
 if ! "${compose}" exec -T maelstro-back python -c 'import psycopg' >/dev/null 2>&1; then
   echo "Installing the local psycopg v3 workaround in maelstro-back..."
   "${compose}" exec -T -u root maelstro-back \

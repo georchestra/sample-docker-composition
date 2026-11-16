@@ -30,18 +30,15 @@ spring:
         predicates:
         - Path=/geoserver/**
       - id: datafeeder
-        uri: ${georchestra.gateway.services.datafeeder.target}
+        uri: ${georchestra.gateway.services.datafeeder-frontend.target}
         predicates:
-        - Path=/datafeeder/**
-        filters:
-        - RemoveRequestHeader=Forwarded
-        - SetRequestHeader=X-Forwarded-Proto, https
-      - id: import
-        uri: ${georchestra.gateway.services.import.target}
+        - Path=/dataset/**
+      - id: datafeeder-backend
+        uri: ${georchestra.gateway.services.datafeeder-backend.target}
         predicates:
-        - Path=/import/**
+        - Path=/datafeeder-backend/**
         filters:
-        - RewritePath=/import/(?<segment>.*),/$\{segment}
+        - RewritePath=/datafeeder-backend/(?<segment>.*),/$\{segment}
       - id: datahub
         uri: ${georchestra.gateway.services.datahub.target}
         predicates:
@@ -63,11 +60,11 @@ spring:
 
 georchestra.gateway.services:
   console.target: http://${CONSOLE_HOST}:8080/console/
-  datafeeder.target: http://${DATAFEEDER_HOST}:8080/datafeeder/
+  datafeeder-frontend.target: http://${DATAFEEDER_FRONTEND_HOST}:8080/
+  datafeeder-backend.target: http://${DATAFEEDER_BACKEND_HOST}:8000/
   datahub.target: http://${DATAHUB_HOST}:80/datahub/
   metadata-editor.target: http://${METADATA_EDITOR_HOST:metadata-editor}:80/metadata-editor/
   geonetwork.target: http://${GEONETWORK_HOST}:8080/geonetwork/
   geoserver.target: http://${GEOSERVER_HOST}:8080/geoserver/
-  import.target: http://${IMPORT_HOST}:80/
   maelstro-back.target: http://${MAELSTRO_HOST}:8000/
   maelstro.target: http://${MAELSTRO_FRONT_HOST}:8080/

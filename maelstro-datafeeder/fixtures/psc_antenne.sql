@@ -23,7 +23,7 @@ SET row_security = off;
 CREATE SCHEMA psc;
 
 
-ALTER SCHEMA psc OWNER TO georchestra;
+ALTER SCHEMA psc OWNER TO postgres;
 
 --
 -- Name: tiger; Type: SCHEMA; Schema: -; Owner: georchestra
@@ -32,7 +32,7 @@ ALTER SCHEMA psc OWNER TO georchestra;
 CREATE SCHEMA tiger;
 
 
-ALTER SCHEMA tiger OWNER TO georchestra;
+ALTER SCHEMA tiger OWNER TO postgres;
 
 --
 -- Name: tiger_data; Type: SCHEMA; Schema: -; Owner: georchestra
@@ -41,7 +41,7 @@ ALTER SCHEMA tiger OWNER TO georchestra;
 CREATE SCHEMA tiger_data;
 
 
-ALTER SCHEMA tiger_data OWNER TO georchestra;
+ALTER SCHEMA tiger_data OWNER TO postgres;
 
 --
 -- Name: topology; Type: SCHEMA; Schema: -; Owner: georchestra
@@ -50,7 +50,7 @@ ALTER SCHEMA tiger_data OWNER TO georchestra;
 CREATE SCHEMA topology;
 
 
-ALTER SCHEMA topology OWNER TO georchestra;
+ALTER SCHEMA topology OWNER TO postgres;
 
 --
 -- Name: SCHEMA topology; Type: COMMENT; Schema: -; Owner: georchestra
@@ -147,7 +147,7 @@ CREATE TABLE psc.antennes (
 );
 
 
-ALTER TABLE psc.antennes OWNER TO georchestra;
+ALTER TABLE psc.antennes OWNER TO postgres;
 
 --
 -- Name: antennes_fid_seq; Type: SEQUENCE; Schema: psc; Owner: georchestra
@@ -162,7 +162,7 @@ CREATE SEQUENCE psc.antennes_fid_seq
     CACHE 1;
 
 
-ALTER TABLE psc.antennes_fid_seq OWNER TO georchestra;
+ALTER TABLE psc.antennes_fid_seq OWNER TO postgres;
 
 --
 -- Name: antennes_fid_seq; Type: SEQUENCE OWNED BY; Schema: psc; Owner: georchestra

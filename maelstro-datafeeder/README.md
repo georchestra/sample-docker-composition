@@ -7,20 +7,16 @@ Datafeeder-managed datasets.
 
 The composition is self-contained inside this directory. It defines the
 Maelstro and geOrchestra services directly and keeps their configuration,
-environment files, bootstrap utilities and sample data locally. It also
-includes the classic Datafeeder backend and frontend.
+environment files, bootstrap utilities and sample data locally.
 
-The composition also includes GeoNetwork UI Datahub and Metadata Editor. The
-classic Datafeeder services are intended only to validate the local integration while
-the supported modern Datafeeder contract is investigated. The environment is
-not the final ticket deliverable. The following still need to be added:
+The composition includes the Python Datafeeder frontend and backend, configured
+with the local task executor and no Airflow services. Application state is
+stored in the geOrchestra database, while imported and published datasets are
+stored in the dedicated `datadb` PostGIS service.
 
-- modern Datafeeder backend and frontend with local tasks, without Airflow;
-- reproducible Datafeeder fixtures and integrity links;
-- health checks and end-to-end smoke tests.
-
-No modern Datafeeder endpoint or task configuration is being inferred from the
-classic application.
+GeoNetwork UI Datahub and Metadata Editor are also included. Reproducible
+end-to-end ingestion and Maelstro synchronization fixtures still need to be
+completed.
 
 It does not include or mount files from another repository. Maelstro uses its
 published backend and frontend images, so cloning `sample-docker-composition`
@@ -51,8 +47,8 @@ make down
 - Gateway: http://127.0.0.1:8088/
 - Datahub: https://georchestra-127-0-0-1.nip.io:8443/datahub/
 - Metadata Editor: https://georchestra-127-0-0-1.nip.io:8443/metadata-editor/
-- classic Datafeeder UI: https://georchestra-127-0-0-1.nip.io:8443/import/
-- classic Datafeeder Swagger: https://georchestra-127-0-0-1.nip.io:8443/datafeeder/swagger-ui/index.html
+- Datafeeder UI: https://georchestra-127-0-0-1.nip.io:8443/dataset/
+- Datafeeder API documentation: https://georchestra-127-0-0-1.nip.io:8443/datafeeder-backend/docs
 - dataset PostGIS: `127.0.0.1:5433`
 - development users: `testadmin/testadmin`, `tmaelstro/tmaelstro`
 
@@ -75,29 +71,23 @@ trusted explicitly.
 These workarounds should be revisited before the composition is considered
 portable and complete.
 
-## Classic Datafeeder compatibility layer
+## Datafeeder local executor
 
-The following services mirror the existing `datafeeder/docker-compose.yaml`
-example without duplicating its database, LDAP, GeoServer, GeoNetwork or proxy:
+The modern integration uses:
 
-- `datafeeder`: `georchestra/datafeeder:latest`;
-- `import`: `georchestra/datafeeder-frontend:latest`;
-- `smtp`: `camptocamp/smtp-sink:latest`.
+- `georchestra/datafeeder-python-frontend:latest`;
+- `georchestra/datafeeder-python-backend:latest-local-executor`;
+- `TASK_EXECUTOR=LOCAL`;
+- no Airflow containers.
 
-They use this composition's local geOrchestra datadir, Gateway routes and
-dedicated PostGIS database. This classic backend does not provide the modern administrative API
-or local-task behavior required by the synchronization specification.
+The backend uses the main geOrchestra database for integrity links and the
+dedicated `datadb` database for staging and final dataset tables. The local
+executor runs ingestion jobs inside the backend container and is intended only
+for development and demonstrations.
 
-The classic Datafeeder-specific configuration is copied into
-`config/datafeeder/`; no file is mounted or included from the sibling
-`datafeeder/` example. Its sample shapefile is also copied locally to
-`fixtures/armoires.zip` for manual import through the wizard.
+Configuration is stored under `config/georchestra/datafeeder/`. The
+`armoires.zip` fixture can be uploaded through the wizard, and the bootstrap
+loads `psc.antennes` into `datadb` as a database-import fixture.
 
-The Gateway route used by this composition is likewise copied to
-`config/gateway/routes.yaml`. This keeps the tested routing behavior local to
-this composition instead of modifying or mounting files from the standalone
-Datafeeder example.
-
-The classic backend builds an incorrect `http` absolute redirect when opening
-`/datafeeder/` through local HTTPS. Use the direct Swagger URL above; the API
-itself and authenticated Swagger page respond correctly.
+This lightweight mode gives processing tasks access to internal services and
+mounted files. It must not be treated as a production deployment.

@@ -25,18 +25,15 @@ georchestra:
       anonymous: true
     services:
       datafeeder:
-        target: ${georchestra.gateway.services.datafeeder.target}
-        headers:
-          json-user: true
-          json-organization: true
+        target: ${georchestra.gateway.services.datafeeder-frontend.target}
         access-rules:
-        - intercept-url: /datafeeder/**
+        - intercept-url: /dataset/**
           anonymous: false
           allowed-roles: SUPERUSER,DATAFEEDER
-      import:
-        target: ${georchestra.gateway.services.import.target}
+      datafeeder-backend:
+        target: ${georchestra.gateway.services.datafeeder-backend.target}
         access-rules:
-        - intercept-url: /import/**
+        - intercept-url: /datafeeder-backend/**
           anonymous: false
           allowed-roles: SUPERUSER,DATAFEEDER
       metadata-editor:

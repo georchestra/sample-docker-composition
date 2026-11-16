@@ -5,6 +5,6 @@ services:
       - "127.0.0.1:${CADDY_HTTPS_PORT:-8443}:443"
       - "127.0.0.1:${CADDY_ADMIN_PORT:-2019}:2019"
 
-  postgis:
+  datadb:
     ports: !override
       - "127.0.0.1:${POSTGIS_PORT:-5433}:5432"

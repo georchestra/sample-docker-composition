@@ -22,9 +22,16 @@ done
   -v "${task_dir}/scripts/create-maelstro-gs-resources.py:/scripts/create-maelstro-gs-resources.py:ro" \
   check python3 /scripts/create-maelstro-gs-resources.py
 
-if ! "${compose}" exec -T postgis psql -U georchestra -d datafeeder -Atc \
+# Initialize the field used by GeoNetwork's default sort so an empty catalog
+# can load without displaying a search error before its first record is added.
+"${compose}" exec -T elasticsearch curl --silent --show-error --fail \
+  --request PUT http://localhost:9200/gn-records/_mapping \
+  --header 'Content-Type: application/json' \
+  --data '{"properties":{"createDate":{"type":"date"}}}' >/dev/null
+
+if ! "${compose}" exec -T datadb psql -U postgres -d postgres -Atc \
   "select to_regclass('psc.antennes') is not null" | grep -qx t; then
-  "${compose}" exec -T postgis psql -v ON_ERROR_STOP=0 -U georchestra -d datafeeder \
+  "${compose}" exec -T datadb psql -v ON_ERROR_STOP=0 -U postgres -d postgres \
     < "${task_dir}/fixtures/psc_antenne.sql"
 else
   echo "The psc.antennes table already exists; skipping import."
@@ -32,7 +39,7 @@ fi
 
 "${compose}" exec -T ldap ldapwhoami -x -H ldap://localhost:389 \
   -D uid=tmaelstro,ou=users,dc=georchestra,dc=org -w tmaelstro
-"${compose}" exec -T postgis psql -U georchestra -d datafeeder -Atc \
+"${compose}" exec -T datadb psql -U postgres -d postgres -Atc \
   'select count(*) from psc.antennes;'
 
 echo "Local bootstrap completed."

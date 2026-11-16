@@ -14,7 +14,7 @@ check_status() {
   status="$(curl --noproxy '*' --insecure --silent --output /dev/null \
     --write-out '%{http_code}' "${base_url}${path}")"
   if [[ ! " ${expected} " =~ " ${status} " ]]; then
-    echo "${path}: HTTP ${status}; se esperaba uno de: ${expected}" >&2
+    echo "${path}: HTTP ${status}; expected one of: ${expected}" >&2
     return 1
   fi
   echo "${path}: HTTP ${status}"
@@ -23,8 +23,8 @@ check_status() {
 # Gateway requires authentication for all three applications. A redirect or an
 # unauthorized response proves that Caddy and the Gateway route are reachable.
 check_status "/maelstro/" "302 401"
-check_status "/import/" "302 401"
-check_status "/datafeeder/" "302 401"
+check_status "/dataset/" "302 401"
+check_status "/datafeeder-backend/utils/health-check/" "302 401"
 check_status "/datahub/" "200"
 check_status "/metadata-editor/" "302 401"
 
@@ -42,8 +42,8 @@ check_authenticated_status() {
 }
 
 check_authenticated_status "/maelstro/" "200"
-check_authenticated_status "/import/" "200"
-check_authenticated_status "/datafeeder/" "200 302"
-check_authenticated_status "/datafeeder/swagger-ui/index.html" "200"
+check_authenticated_status "/dataset/" "200"
+check_authenticated_status "/datafeeder-backend/utils/health-check/" "200"
+check_authenticated_status "/datafeeder-backend/docs" "200"
 check_authenticated_status "/datahub/" "200"
 check_authenticated_status "/metadata-editor/" "200"

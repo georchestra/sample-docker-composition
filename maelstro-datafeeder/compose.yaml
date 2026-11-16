@@ -10,8 +10,7 @@ volumes:
   geoserver_native_libs:
   geonetwork_datadir:
   esdata:
-  datafeeder_postgis_data:
-  datafeeder_uploads:
+  datadb_data:
 
 secrets:
   slapd_password:
@@ -24,6 +23,23 @@ services:
     image: georchestra/database:24.0.x
     env_file: [./env/database-georchestra.env]
     volumes: [postgresql_data:/var/lib/postgresql/data]
+    restart: no
+
+  datafeeder-db-init:
+    image: georchestra/database:24.0.x
+    depends_on:
+      database:
+        condition: service_healthy
+    env_file: [./env/database-georchestra.env]
+    volumes:
+      - ./config/database/datafeeder-init.sql:/datafeeder-init.sql:ro
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        psql -h database -U $$PGUSER -d $$PGDATABASE -Atc
+        "select to_regclass('datafeeder.integrity_link') is not null" | grep -qx t ||
+        psql -v ON_ERROR_STOP=1 -h database -U $$PGUSER -d $$PGDATABASE
+        -f /datafeeder-init.sql
     restart: no
 
   ldap:
@@ -120,15 +136,21 @@ services:
     env_file: [./env/hosts.env, ./env/database-georchestra.env]
     restart: no
 
-  postgis:
-    image: postgis/postgis:13-3.1-alpine
+  datadb:
+    image: postgis/postgis:18-3.6
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 3s
       retries: 3
-    env_file: [./env/database-datafeeder.env]
-    volumes: [datafeeder_postgis_data:/var/lib/postgresql/data]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: postgres
+    volumes: [datadb_data:/var/lib/postgresql]
+    configs:
+      - source: datadb_init_sql
+        target: /docker-entrypoint-initdb.d/01-data-db-init.sql
     restart: no
 
   elasticsearch:
@@ -221,32 +243,73 @@ services:
     image: geonetwork/geonetwork-ui-metadata-editor:latest
     restart: no
 
-  import:
-    image: georchestra/datafeeder-frontend:latest
+  datafeeder-frontend:
+    image: georchestra/datafeeder-python-frontend:latest
+    volumes:
+      - ./config/georchestra:/etc/georchestra:ro
+    environment:
+      ENABLE_GEORCHESTRA_HEADER: "true"
+      CONFIG_DIRECTORY_OVERRIDE: /etc/georchestra/datafeeder/frontend
     restart: no
 
-  datafeeder:
-    image: georchestra/datafeeder:latest
+  datafeeder-backend:
+    image: georchestra/datafeeder-python-backend:latest-local-executor
+    # Tell FastAPI about the external Gateway prefix so Swagger requests the
+    # OpenAPI definition from /datafeeder-backend/openapi.json.
+    command:
+      - sh
+      - -c
+      - >-
+        /app/.venv/bin/alembic upgrade head &&
+        exec /app/.venv/bin/uvicorn src.main:app --host 0.0.0.0 --port 8000
+        --root-path /datafeeder-backend
     depends_on:
-      database: {condition: service_healthy}
-      postgis: {condition: service_healthy}
+      datafeeder-db-init: {condition: service_completed_successfully}
+      datadb: {condition: service_healthy}
       geoserver: {condition: service_healthy}
       geonetwork: {condition: service_healthy}
     volumes:
       - ./config/georchestra:/etc/georchestra:ro
-      - datafeeder_uploads:/tmp/datafeeder
     env_file:
       - ./env/common.env
       - ./env/hosts.env
       - ./env/ldap.env
       - ./env/database-georchestra.env
-      - ./env/database-datafeeder.env
     environment:
-      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-8443}
-      JAVA_OPTIONS: -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:5005
-    ports: ["127.0.0.1:${DATAFEEDER_DEBUG_PORT:-5005}:5005"]
+      DATADIR: /etc/georchestra
+      DATADIR_PATH: /etc/georchestra
+      DEBUG: "true"
+      TASK_EXECUTOR: LOCAL
+      BACKEND_INTERNAL_URL: http://localhost:8000
+      POSTGRES_DATA_HOST: datadb
+      POSTGRES_DATA_PORT: 5432
+      POSTGRES_DATA_USER: postgres
+      POSTGRES_DATA_PASSWORD: mypassword
+      POSTGRES_DATA_DB: postgres
+      SOURCE_DATABASES: >-
+        {"LOCAL_FIXTURES":{"type":"copy","connection_string":"postgresql://postgres:mypassword@datadb:5432/postgres","label":"Local fixtures"}}
+      GEOSERVER_INTERNAL_URL: http://gateway:8080/geoserver
+      GEONETWORK_INTERNAL_URL: http://gateway:8080/geonetwork
+      CONSOLE_INTERNAL_URL: http://gateway:8080/console
+      DATA_PUBLIC_URL: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}/geoserver
+      DATAHUB_PUBLIC_URL: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}/datahub/dataset/{metadata_id}
+      METADATA_PUBLIC_URL: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}/geonetwork
+      FRONTEND_HOST: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
     restart: no
 
   smtp:
     image: camptocamp/smtp-sink:latest
     restart: no
+
+configs:
+  datadb_init_sql:
+    content: |
+      CREATE EXTENSION IF NOT EXISTS postgis;
+      CREATE SCHEMA IF NOT EXISTS data;
+      CREATE SCHEMA IF NOT EXISTS staging;

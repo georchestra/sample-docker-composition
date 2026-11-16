@@ -14,6 +14,8 @@
                 version="2.0"
                 exclude-result-prefixes="#all">
 
+  <xsl:import href="inspire/topic_category.xsl"/>
+
   <!--
   Default template to apply MetadataRecordProperties.java properties to a record template adhering to http://schemas.opengis.net/csw/2.0.2/profiles/apiso/1.0.0/apiso.xsd
    -->
@@ -21,8 +23,11 @@
   <!--  <xsl:strip-space elements="*" xmlns="http://www.isotc211.org/2005/gmd" />-->
   <xsl:output indent="yes" standalone="yes" />
 
-  <!-- Whole document used as xsl parameter, see sample_md_properties.xml for an example of its contents -->
-  <xsl:param name="props" />
+  <!-- Properties are embedded in the source document as the first child of the root element -->
+  <xsl:variable name="props" select="//properties" />
+
+  <!-- Suppress the embedded properties element from appearing in the output -->
+  <xsl:template match="properties" />
 
   <xsl:template match="@*|node()">
     <xsl:copy>
@@ -36,15 +41,9 @@
     </gco:CharacterString>
   </xsl:template>
 
-  <xsl:template match="//mdb:dateInfo[1]/cit:CI_Date/cit:date/gco:DateTime">
+  <xsl:template match="//mdb:dateInfo/cit:CI_Date/cit:date/gco:DateTime">
     <gco:DateTime>
-      <xsl:value-of select="format-dateTime(current-dateTime(), '[Y0001]-[M01]-[D01]T[h01]:[m01]:00.295346Z')" />
-    </gco:DateTime>
-  </xsl:template>
-
-  <xsl:template match="//mdb:dateInfo[2]/cit:CI_Date/cit:date/gco:DateTime">
-    <gco:DateTime>
-      <xsl:value-of select="format-dateTime(current-dateTime(), '[Y0001]-[M01]-[D01]T[h01]:[m01]:00.295346Z')" />
+      <xsl:value-of select="$props//creationDate" />
     </gco:DateTime>
   </xsl:template>
 
@@ -61,69 +60,19 @@
     </gco:CharacterString>
   </xsl:template>
 
-  <xsl:template match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:descriptiveKeywords">
-    <mri:descriptiveKeywords>
-      <mri:MD_Keywords>
-        <xsl:for-each select="$props//keywords//keyword">
-          <mri:keyword>
-            <gco:CharacterString>
-              <xsl:value-of select="." />
-            </gco:CharacterString>
-          </mri:keyword>
-        </xsl:for-each>
-        <mri:type>
-          <mri:MD_KeywordTypeCode codeList="http://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#MD_KeywordTypeCode" codeListValue="theme"/>
-        </mri:type>
-        <mri:thesaurusName>
-          <cit:CI_Citation>
-            <cit:title>
-              <gcx:Anchor xlink:href="https://${FQDN}/thematique/categories">Catégories</gcx:Anchor>
-            </cit:title>
-            <cit:date>
-              <cit:CI_Date>
-                <cit:date>
-                  <gco:Date>2024-05-14</gco:Date>
-                </cit:date>
-                <cit:dateType>
-                  <cit:CI_DateTypeCode codeList="http://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#CI_DateTypeCode" codeListValue="publication"/>
-                </cit:dateType>
-              </cit:CI_Date>
-            </cit:date>
-            <cit:date>
-              <cit:CI_Date>
-                <cit:date>
-                  <gco:Date>2024-05-14</gco:Date>
-                </cit:date>
-                <cit:dateType>
-                  <cit:CI_DateTypeCode codeList="http://standards.iso.org/iso/19115/resources/Codelists/cat/codelists.xml#CI_DateTypeCode" codeListValue="publication"/>
-                </cit:dateType>
-              </cit:CI_Date>
-            </cit:date>
-            <cit:identifier>
-              <mcc:MD_Identifier>
-                <mcc:code>
-                  <gcx:Anchor xlink:href="https://${FQDN}/geonetwork/srv/api/registries/vocabularies/external.theme.thesaurus_mot_cle_thematique_categories">geonetwork.thesaurus.external.theme.thesaurus_mot_cle_thematique_categories</gcx:Anchor>
-                </mcc:code>
-              </mcc:MD_Identifier>
-            </cit:identifier>
-          </cit:CI_Citation>
-        </mri:thesaurusName>
-      </mri:MD_Keywords>
-    </mri:descriptiveKeywords>
-  </xsl:template>
 
 
   <xsl:template
           match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:citation/cit:CI_Citation/cit:date[1]/cit:CI_Date/cit:date/gco:Date">
-    <gco:Date>
+    <gco:DateTime>
       <xsl:value-of select="$props//creationDate" />
-    </gco:Date>
+    </gco:DateTime>
   </xsl:template>
   <xsl:template
           match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:citation/cit:CI_Citation/cit:date[2]/cit:CI_Date/cit:date/gco:Date">
-    <gco:Date>
+    <gco:DateTime>
       <xsl:value-of select="$props//metadataPublicationDate" />
-    </gco:Date>
+    </gco:DateTime>
   </xsl:template>
 
   <xsl:template
@@ -135,30 +84,37 @@
 
   <xsl:template
           match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:extent/gex:EX_Extent/gex:geographicElement/gex:EX_GeographicBoundingBox">
-    <xsl:if test="$props//showExtent='true'">
-    <gex:EX_GeographicBoundingBox>
-      <gex:westBoundLongitude>
-        <gco:Decimal>
-          <xsl:value-of select="$props//westBoundLongitude" />
-        </gco:Decimal>
-      </gex:westBoundLongitude>
-      <gex:eastBoundLongitude>
-        <gco:Decimal>
-          <xsl:value-of select="$props//eastBoundLongitude" />
-        </gco:Decimal>
-      </gex:eastBoundLongitude>
-      <gex:southBoundLatitude>
-        <gco:Decimal>
-          <xsl:value-of select="$props//southBoundLatitude" />
-        </gco:Decimal>
-      </gex:southBoundLatitude>
-      <gex:northBoundLatitude>
-        <gco:Decimal>
-          <xsl:value-of select="$props//northBoundLatitude" />
-        </gco:Decimal>
-      </gex:northBoundLatitude>
-    </gex:EX_GeographicBoundingBox>
-    </xsl:if>
+    <xsl:choose>
+      <xsl:when test="$props//westBoundLongitude != ''">
+        <gex:EX_GeographicBoundingBox>
+          <gex:westBoundLongitude>
+            <gco:Decimal>
+              <xsl:value-of select="$props//westBoundLongitude" />
+            </gco:Decimal>
+          </gex:westBoundLongitude>
+          <gex:eastBoundLongitude>
+            <gco:Decimal>
+              <xsl:value-of select="$props//eastBoundLongitude" />
+            </gco:Decimal>
+          </gex:eastBoundLongitude>
+          <gex:southBoundLatitude>
+            <gco:Decimal>
+              <xsl:value-of select="$props//southBoundLatitude" />
+            </gco:Decimal>
+          </gex:southBoundLatitude>
+          <gex:northBoundLatitude>
+            <gco:Decimal>
+              <xsl:value-of select="$props//northBoundLatitude" />
+            </gco:Decimal>
+          </gex:northBoundLatitude>
+        </gex:EX_GeographicBoundingBox>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:copy>
+          <xsl:apply-templates select="@*|node()" />
+        </xsl:copy>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template
@@ -184,7 +140,12 @@
     </mri:spatialResolution>
   </xsl:template>
 
-  <xsl:template match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:pointOfContact">
+  <!-- Copies existing mri:pointOfContact elements through; appends user contact after the last one -->
+  <xsl:template
+          match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:pointOfContact[not(following-sibling::mri:pointOfContact)]">
+    <xsl:copy>
+      <xsl:apply-templates select="@*|node()" />
+    </xsl:copy>
     <mri:pointOfContact>
       <xsl:call-template name="contactInfo">
         <xsl:with-param name="individualName" select="$props//datasetResponsibleParty//individualName" />
@@ -202,7 +163,11 @@
     </mri:pointOfContact>
   </xsl:template>
 
-  <xsl:template match="//mdb:contact">
+  <!-- Copies existing mdb:contact elements through; appends user contact after the last one -->
+  <xsl:template match="//mdb:contact[not(following-sibling::mdb:contact)]">
+    <xsl:copy>
+      <xsl:apply-templates select="@*|node()" />
+    </xsl:copy>
     <mdb:contact>
       <xsl:call-template name="contactInfo">
         <xsl:with-param name="individualName" select="$props//metadataResponsibleParty//individualName" />
@@ -236,7 +201,7 @@
   <xsl:template
           match="//mdb:distributionInfo/mrd:MD_Distribution/mrd:transferOptions">
     <mrd:transferOptions>
-      <mrd:MD_DigitalTransferOptions>
+        <mrd:MD_DigitalTransferOptions>
         <xsl:for-each select="$props//onlineResources//onlineResource">
           <mrd:onLine>
             <xsl:call-template name="onlineResource">
@@ -247,7 +212,7 @@
             </xsl:call-template>
           </mrd:onLine>
         </xsl:for-each>
-      </mrd:MD_DigitalTransferOptions>
+        </mrd:MD_DigitalTransferOptions>
     </mrd:transferOptions>
   </xsl:template>
 
@@ -329,7 +294,6 @@
     </cit:CI_Responsibility>
   </xsl:template>
 
-
   <!-- creates a CI_OnlineResource with the given parameters -->
   <xsl:template name="onlineResource">
     <xsl:param name="linkage" />
@@ -388,7 +352,6 @@
     that matches an entry in rdf:Description rdf:about="<id>"/skos:prefLabel[text()] in inspire/themes.rdf
   -->
 
-  <xsl:import href="inspire/topic_category.xsl"/>
   <xsl:template match="//mdb:identificationInfo/mri:MD_DataIdentification/mri:topicCategory">
     <xsl:call-template name="inspire_topic_category"/>
   </xsl:template>
