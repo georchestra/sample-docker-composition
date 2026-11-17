@@ -1,0 +1,36 @@
+sources:
+  geonetwork_instances:
+    - name: "demogeOrchestra"
+      api_url: "https://demo.georchestra.org/geonetwork/srv/api"
+      login: "testadmin"
+      password: "testadmin"
+      transformations: []
+  geoserver_instances:
+    - url: "https://demo.georchestra.org/geoserver"
+      login: "testadmin"
+      password: "testadmin"
+
+
+destinations:
+  # Destination needs to be geOrchestra
+  # It only have one geonetwork and geoserver
+
+  # Instance name of geOrchestra destination will be printed in user interface of maelstro
+  "CompoLocale":
+    geonetwork:
+      api_url: "http://gateway:8080/geonetwork/srv/api"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+    geoserver:
+      url: "http://gateway:8080/geoserver"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+
+db_logging:
+  host: "${PGHOST}"
+  port: "${PGPORT}"
+  login: "${PGUSER}"
+  #password: georchestra
+  password: "${PGPASSWORD}"
+  database: "${PGDATABASE}"
+  schema: "maelstro"
