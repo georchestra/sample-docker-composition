@@ -186,7 +186,7 @@ services:
     env_file: [./env/common.env]
 
   maelstro-front:
-    image: georchestra/maelstro-frontend:latest
+    image: ${MAELSTRO_FRONT_IMAGE:-georchestra/maelstro-frontend:latest}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/maelstro/"]
       interval: 10s
@@ -202,7 +202,7 @@ services:
     restart: no
 
   maelstro-back:
-    image: georchestra/maelstro-backend:latest
+    image: ${MAELSTRO_BACK_IMAGE:-georchestra/maelstro-backend:latest}
     healthcheck:
       test: health_check
       interval: 10s
@@ -227,7 +227,7 @@ services:
     restart: no
 
   check:
-    image: georchestra/maelstro-backend:latest
+    image: ${MAELSTRO_BACK_IMAGE:-georchestra/maelstro-backend:latest}
     profiles: [check]
     environment:
       MAELSTRO_CONFIG: /etc/maelstro/config.yaml

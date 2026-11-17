@@ -1,14 +1,19 @@
 sources:
   geonetwork_instances:
-    - name: "demogeOrchestra"
-      api_url: "https://demo.georchestra.org/geonetwork/srv/api"
-      login: "testadmin"
-      password: "testadmin"
+    - name: "localGeOrchestra"
+      api_url: "http://gateway:8080/geonetwork/srv/api"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
       transformations: []
   geoserver_instances:
-    - url: "https://demo.georchestra.org/geoserver"
-      login: "testadmin"
-      password: "testadmin"
+    - url: "http://gateway:8080/geoserver"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+  datafeeder_instances:
+    - name: "localGeOrchestra"
+      url: "http://gateway:8080/datafeeder-backend"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
 
 
 destinations:
@@ -23,6 +28,10 @@ destinations:
       password: "${LOCAL_PASSWORD}"
     geoserver:
       url: "http://gateway:8080/geoserver"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+    datafeeder:
+      url: "http://gateway:8080/datafeeder-backend"
       login: "${LOCAL_LOGIN}"
       password: "${LOCAL_PASSWORD}"
 
