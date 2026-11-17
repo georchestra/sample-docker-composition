@@ -5,6 +5,11 @@ sources:
       login: "${LOCAL_LOGIN}"
       password: "${LOCAL_PASSWORD}"
       transformations: []
+    - name: "DESTINATION"
+      api_url: "${DESTINATION_GEONETWORK_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+      transformations: []
   geoserver_instances:
     - url: "http://gateway:8080/geoserver"
       login: "${LOCAL_LOGIN}"
@@ -14,6 +19,10 @@ sources:
       url: "http://gateway:8080/datafeeder-backend"
       login: "${LOCAL_LOGIN}"
       password: "${LOCAL_PASSWORD}"
+    - name: "DESTINATION"
+      url: "${DESTINATION_DATAFEEDER_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
 
 
 destinations:
@@ -34,6 +43,20 @@ destinations:
       url: "http://gateway:8080/datafeeder-backend"
       login: "${LOCAL_LOGIN}"
       password: "${LOCAL_PASSWORD}"
+
+  "DESTINATION":
+    geonetwork:
+      api_url: "${DESTINATION_GEONETWORK_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+    geoserver:
+      url: "${DESTINATION_GEOSERVER_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+    datafeeder:
+      url: "${DESTINATION_DATAFEEDER_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
 
 db_logging:
   host: "${PGHOST}"
