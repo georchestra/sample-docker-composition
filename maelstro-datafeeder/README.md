@@ -24,7 +24,17 @@ is sufficient to start this environment.
 
 ## Usage
 
+Requirements:
+
+- Docker Engine with the Compose plugin;
+- GNU Make;
+- Git.
+
+The base environment uses the published Maelstro images and only requires this
+repository:
+
 ```bash
+cp .env.example .env
 make config
 make up
 make bootstrap  # first initialization only
@@ -32,12 +42,83 @@ make smoke
 make ps
 ```
 
+The first startup downloads all container images and may take several minutes.
+`make bootstrap` is required only for new volumes. It creates the development
+users and roles, configures the local services and loads the sample data.
+
 To inspect logs or stop the stack without deleting its volumes:
 
 ```bash
 make logs
 make down
 ```
+
+## Testing a Maelstro feature branch
+
+Testing changes that have not yet been published in the official Maelstro
+images requires both repositories. The Compose file remains self-contained and
+does not mount or reference the Maelstro checkout.
+
+Clone the feature branches next to each other, or use any local paths:
+
+```bash
+git clone --branch feat/datafeeder-sync \
+  git@github.com:jemacchi/maelstro.git
+git clone --branch feat/maelstro-datafeeder \
+  git@github.com:jemacchi/sample-docker-composition.git
+```
+
+Build the feature images from the Maelstro checkout:
+
+```bash
+cd maelstro
+docker build --tag maelstro-backend:datafeeder-sync backend
+docker build --tag maelstro-frontend:datafeeder-ui frontend
+```
+
+In `sample-docker-composition/maelstro-datafeeder/.env`, select those local
+images:
+
+```dotenv
+MAELSTRO_FRONT_IMAGE=maelstro-frontend:datafeeder-ui
+MAELSTRO_BACK_IMAGE=maelstro-backend:datafeeder-sync
+```
+
+Then start the composition normally:
+
+```bash
+cd sample-docker-composition/maelstro-datafeeder
+make config
+make up
+make bootstrap  # only for new volumes
+make smoke
+```
+
+Leave the two image variables unset to run the same composition with the
+official `georchestra/maelstro-frontend:latest` and
+`georchestra/maelstro-backend:latest` images.
+
+## External destination credentials
+
+External Datafeeder synchronization uses the Maelstro feature branch described
+above. The official Maelstro images can run the base environment, but they do
+not include the `copy_data` workflow yet.
+
+Create the local ignored environment file before testing an external destination:
+
+```bash
+cp .env.example .env
+```
+
+Set the destination GeoNetwork, GeoServer and Datafeeder URLs together with
+`DESTINATION_LOGIN` and `DESTINATION_PASSWORD` in `.env`. Docker Compose
+injects them only into the Maelstro backend; the credentials and deployment
+URLs are not stored in the application configuration or committed to Git.
+
+`DESTINATION` is available both as a read-only source and as a destination.
+Selecting it as a destination and opening the synchronization preview performs
+GET requests only. The destination is modified only after the user explicitly
+confirms the synchronization.
 
 ## Local access
 
