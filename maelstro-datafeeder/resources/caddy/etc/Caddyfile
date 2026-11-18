@@ -1,0 +1,36 @@
+(static_fileserver) {
+    root * /usr/share/caddy/static
+    file_server
+}
+
+{$FQDN} {
+    tls internal
+    # For using a custom certificate:
+    # tls /etc/certs/ca.pem /etc/certs/key.pem
+
+    @static-resources {
+        path /favicon.ico
+        path /crossdomain.xml
+        path /robots.txt
+    }
+
+    handle_errors {
+        @5xx `{err.status_code} >= 500 && {err.status_code} < 600`
+        handle @5xx {
+            import static_fileserver
+            rewrite * /errors/50x.html
+        }
+    }
+
+    handle @static-resources {
+        import static_fileserver
+    }
+
+    handle_path /public/* {
+        import static_fileserver
+    }
+
+    handle {
+        reverse_proxy gateway:8080
+    }
+}

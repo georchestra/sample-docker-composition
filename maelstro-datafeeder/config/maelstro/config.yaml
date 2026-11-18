@@ -1,0 +1,68 @@
+sources:
+  geonetwork_instances:
+    - name: "localGeOrchestra"
+      api_url: "http://gateway:8080/geonetwork/srv/api"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+      transformations: []
+    - name: "DESTINATION"
+      api_url: "${DESTINATION_GEONETWORK_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+      transformations: []
+  geoserver_instances:
+    - url: "http://gateway:8080/geoserver"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+  datafeeder_instances:
+    - name: "localGeOrchestra"
+      url: "http://gateway:8080/datafeeder-backend"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+    - name: "DESTINATION"
+      url: "${DESTINATION_DATAFEEDER_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+
+
+destinations:
+  # Destination needs to be geOrchestra
+  # It only have one geonetwork and geoserver
+
+  # Instance name of geOrchestra destination will be printed in user interface of maelstro
+  "CompoLocale":
+    geonetwork:
+      api_url: "http://gateway:8080/geonetwork/srv/api"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+    geoserver:
+      url: "http://gateway:8080/geoserver"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+    datafeeder:
+      url: "http://gateway:8080/datafeeder-backend"
+      login: "${LOCAL_LOGIN}"
+      password: "${LOCAL_PASSWORD}"
+
+  "DESTINATION":
+    geonetwork:
+      api_url: "${DESTINATION_GEONETWORK_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+    geoserver:
+      url: "${DESTINATION_GEOSERVER_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+    datafeeder:
+      url: "${DESTINATION_DATAFEEDER_URL}"
+      login: "${DESTINATION_LOGIN}"
+      password: "${DESTINATION_PASSWORD}"
+
+db_logging:
+  host: "${PGHOST}"
+  port: "${PGPORT}"
+  login: "${PGUSER}"
+  #password: georchestra
+  password: "${PGPASSWORD}"
+  database: "${PGDATABASE}"
+  schema: "maelstro"
