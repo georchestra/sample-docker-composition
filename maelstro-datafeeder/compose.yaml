@@ -20,17 +20,17 @@ secrets:
 
 services:
   database:
-    image: georchestra/database:24.0.x
-    env_file: [./env/database-georchestra.env]
-    volumes: [postgresql_data:/var/lib/postgresql/data]
+    image: georchestra/database:26.0.1
+    env_file: [./envs/database-georchestra.env]
+    volumes: [postgresql_data:/var/lib/postgresql]
     restart: no
 
   datafeeder-db-init:
-    image: georchestra/database:24.0.x
+    image: georchestra/database:26.0.1
     depends_on:
       database:
         condition: service_healthy
-    env_file: [./env/database-georchestra.env]
+    env_file: [./envs/database-georchestra.env]
     volumes:
       - ./config/database/datafeeder-init.sql:/datafeeder-init.sql:ro
     entrypoint: ["/bin/sh", "-ec"]
@@ -43,7 +43,7 @@ services:
     restart: no
 
   ldap:
-    image: georchestra/ldap:24.0.x
+    image: georchestra/ldap:26.0.x
     secrets: [slapd_password, geoserver_privileged_user_passwd]
     environment:
       SLAPD_ORGANISATION: georchestra
@@ -55,29 +55,26 @@ services:
       RUN_AS_UID: 0
       RUN_AS_GID: 0
       LDAPHOST: localhost
-    env_file: [./env/ldap.env]
+    env_file: [./envs/ldap.env]
     volumes: [ldap_data:/var/lib/ldap, ldap_config:/etc/ldap]
     restart: no
 
   gateway:
-    image: georchestra/gateway:latest-debug
+    image: georchestra/gateway:3.1.1-debug
     depends_on: [database]
-    volumes: [./config/georchestra:/etc/georchestra:ro]
+    volumes: [./config:/etc/georchestra:ro]
     environment:
       JAVA_TOOL_OPTIONS: -Dgeorchestra.datadir=/etc/georchestra
     env_file:
-      - ./env/common.env
-      - ./env/ldap.env
-      - ./env/hosts.env
-      - ./env/database-georchestra.env
+      - ./envs/common.env
+      - ./envs/ldap.env
+      - ./envs/hosts.env
+      - ./envs/database-georchestra.env
     restart: no
     ports: ["127.0.0.1:8088:8080"]
-    networks:
-      default:
-        aliases: [proxy]
 
   geoserver:
-    image: georchestra/geoserver:24.0.x
+    image: georchestra/geoserver:2.28.6-georchestra-00
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f 'http://localhost:8080/geoserver/ows?SERVICE=WMS&LAYERS=geor:public_layer&FORMAT=image/png&VERSION=1.3.0&SLD_VERSION=1.1.0&REQUEST=GetMap&CRS=EPSG:3857&BBOX=-20820223,-20820223,20820223,20820223&WIDTH=10&HEIGHT=10' >/dev/null || exit 1"]
       interval: 30s
@@ -87,7 +84,7 @@ services:
       ldap: {condition: service_healthy}
       database: {condition: service_healthy}
     volumes:
-      - ./config/georchestra:/etc/georchestra:ro
+      - ./config:/etc/georchestra:ro
       - geoserver_datadir:/mnt/geoserver_datadir
       - geoserver_geodata:/mnt/geoserver_geodata
       - geoserver_tiles:/mnt/geoserver_tiles
@@ -96,11 +93,11 @@ services:
       JAVA_OPTIONS: -Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF -DGEOSERVER_CSRF_WHITELIST=georchestra-127-0-0-1.nip.io
       XMS: 256M
       XMX: 8G
-    env_file: [./env/database-georchestra.env, ./env/database-datafeeder.env]
+    env_file: [./envs/database-georchestra.env, ./envs/database-datafeeder.env]
     restart: no
 
   console:
-    image: georchestra/console:24.0.x
+    image: georchestra/console:26.0.x
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f http://localhost:8080/console/account/new >/dev/null || exit 1"]
       interval: 30s
@@ -109,16 +106,16 @@ services:
     depends_on:
       ldap: {condition: service_healthy}
       database: {condition: service_healthy}
-    volumes: [./config/georchestra:/etc/georchestra:ro]
+    volumes: [./config:/etc/georchestra:ro]
     environment:
       JAVA_OPTIONS: -Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
       XMS: 256M
       XMX: 1G
-    env_file: [./env/common.env, ./env/ldap.env, ./env/database-georchestra.env, ./env/hosts.env]
+    env_file: [./envs/common.env, ./envs/ldap.env, ./envs/database-georchestra.env, ./envs/hosts.env]
     restart: no
 
   geonetwork:
-    image: georchestra/geonetwork:24.0.x
+    image: georchestra/geonetwork:4.4.12-georchestra-01
     healthcheck:
       test: ["CMD-SHELL", "curl -s -f http://localhost:8080/geonetwork/srv/eng/catalog.search >/dev/null || exit 1"]
       interval: 30s
@@ -128,12 +125,12 @@ services:
       console: {condition: service_healthy}
       database: {condition: service_healthy}
       elasticsearch: {condition: service_healthy}
-    volumes: [./config/georchestra:/etc/georchestra:ro, geonetwork_datadir:/mnt/geonetwork_datadir]
+    volumes: [./config:/etc/georchestra:ro, geonetwork_datadir:/mnt/geonetwork_datadir]
     environment:
       JAVA_OPTIONS: -Duser.home=/tmp/jetty -Dgeorchestra.datadir=/etc/georchestra -Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005 -Dorg.eclipse.jetty.annotations.AnnotationParser.LEVEL=OFF
       XMS: 256M
       XMX: 6G
-    env_file: [./env/hosts.env, ./env/database-georchestra.env]
+    env_file: [./envs/hosts.env, ./envs/database-georchestra.env, ./envs/.envs-elastic]
     restart: no
 
   datadb:
@@ -154,18 +151,20 @@ services:
     restart: no
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.21
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.13
     ulimits:
       memlock: {soft: -1, hard: -1}
     volumes: [esdata:/usr/share/elasticsearch/data]
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -f http://localhost:9200/_cat/health >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -u elastic:$$ELASTIC_PASSWORD -s -f http://localhost:9200/_cat/health  >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 10
     environment:
       discovery.type: single-node
       ES_JAVA_OPTS: -Xms512m -Xmx512m
+    env_file:
+      - ./envs/.envs-elastic
     restart: no
 
   caddy:
@@ -183,7 +182,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 10
-    env_file: [./env/common.env]
+    env_file: [./envs/common.env]
 
   maelstro-front:
     image: ${MAELSTRO_FRONT_IMAGE:-georchestra/maelstro-frontend:latest}
@@ -194,14 +193,14 @@ services:
       start_period: 10s
       timeout: 10s
     volumes:
-      - ./config/georchestra:/etc/georchestra:ro
+      - ./config:/etc/georchestra:ro
       - ./config/maelstro:/etc/maelstro:ro
     environment:
       CUSTOM_SCRIPTS_DIRECTORY: /etc/maelstro/scripts
-      MAELSTRO_BACK_HOST: maelstro-back
+      MAELSTRO_BACK_HOST: maelstro-backend
     restart: no
 
-  maelstro-back:
+  maelstro-backend:
     image: ${MAELSTRO_BACK_IMAGE:-georchestra/maelstro-backend:latest}
     healthcheck:
       test: health_check
@@ -256,7 +255,7 @@ services:
   datafeeder-frontend:
     image: georchestra/datafeeder-python-frontend:latest
     volumes:
-      - ./config/georchestra:/etc/georchestra:ro
+      - ./config:/etc/georchestra:ro
     environment:
       ENABLE_GEORCHESTRA_HEADER: "true"
       CONFIG_DIRECTORY_OVERRIDE: /etc/georchestra/datafeeder/frontend
@@ -279,12 +278,12 @@ services:
       geoserver: {condition: service_healthy}
       geonetwork: {condition: service_healthy}
     volumes:
-      - ./config/georchestra:/etc/georchestra:ro
+      - ./config:/etc/georchestra:ro
     env_file:
-      - ./env/common.env
-      - ./env/hosts.env
-      - ./env/ldap.env
-      - ./env/database-georchestra.env
+      - ./envs/common.env
+      - ./envs/hosts.env
+      - ./envs/ldap.env
+      - ./envs/database-georchestra.env
     environment:
       DATADIR: /etc/georchestra
       DATADIR_PATH: /etc/georchestra
@@ -311,10 +310,6 @@ services:
       timeout: 5s
       retries: 12
       start_period: 20s
-    restart: no
-
-  smtp:
-    image: camptocamp/smtp-sink:latest
     restart: no
 
 configs:

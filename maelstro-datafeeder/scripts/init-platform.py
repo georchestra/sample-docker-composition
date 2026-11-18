@@ -3,7 +3,7 @@
 import requests
 
 
-BASE_URL = "http://proxy:8080/console/private"
+BASE_URL = "http://gateway:8080/console/private"
 AUTH = ("testadmin", "testadmin")
 
 

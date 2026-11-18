@@ -1,0 +1,52 @@
+# Spring-boot/cloud application configuration.
+#
+# Here you can override the spring configuration provided by the Gateway
+# by default.
+#
+# See here for the default provided configuration:
+# https://github.com/georchestra/georchestra-gateway/blob/main/gateway/src/main/resources/application.yml
+
+server:
+  forward-headers-strategy: FRAMEWORK
+  reactive:
+    session:
+      timeout: 1440m # 24h
+
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          # Trust all proxies (Use with caution!)
+          trusted-proxies: .*
+          # OR better: Trust a specific IP
+          filter:
+            secure-headers:
+              referrer-policy: strict-origin
+  session:
+    redis:
+      # Enable Spring Session with Redis. 
+      # Disabled by default for backward compatibility, but should be enabled in production for better session management and scalability.
+      enabled: ${SPRING_SESSION_REDIS_ENABLED:false}
+      host: ${SPRING_SESSION_REDIS_HOST:redis}
+      port: ${SPRING_SESSION_REDIS_PORT:6379}
+      password: ${SPRING_SESSION_REDIS_PASSWORD:password}
+
+  #####
+  # Uncomment and adapt to use UI customization.
+  # See documentation : 
+  # https://docs.georchestra.org/gateway/en/latest/user_guide/ui_customization/?h=thy#main-principles
+  #
+  # WARN : if enable, don't forget to adapt path in /templates and /static files.
+  #
+  #####
+  # thymeleaf:
+  #   prefix: file:${georchestra.datadir}/gateway/templates/
+  # web:
+  #   resources:
+  #  In order to import your resources, create a folder /etc/georchestra/gateway/static/ and put them inside. e.g. If you create /etc/georchestra/gateway/static/img/myimg.png, your resource will be available on <your domain>/img/myimg.png
+  #     static-locations: file:/etc/georchestra/gateway/static/, classpath:/static/
+  # webflux:
+  #   Change this line if you want to set a "base path" to your static resources
+  #   static-path-pattern: /static/** # <- your resource will be available with a /static/ prefix
+  #####

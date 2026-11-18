@@ -82,8 +82,8 @@ georchestra:
           json-user: true
       geoserver:
         target: ${georchestra.gateway.services.geoserver.target}
-      maelstro-back:
-        target: ${georchestra.gateway.services.maelstro-back.target}
+      maelstro-backend:
+        target: ${georchestra.gateway.services.maelstro-backend.target}
         access-rules:
           - intercept-url: /maelstro-backend/**
             anonymous: false
