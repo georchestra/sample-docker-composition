@@ -1,0 +1,87 @@
+# File included by gateway.yaml to set up the spring-gateway's routes
+# target service URL's are defined in gateway.yaml (e.g. georchestra.gateway.services.<service>.target)
+
+spring:
+  cloud:
+    gateway:
+     server:
+       webflux:
+        routes:
+        - id: root
+          uri: ${georchestra.gateway.services.datahub.target}
+          predicates:
+          - Path=/
+          filters:
+          - RedirectTo=308, /datahub/
+        - id: console
+          uri: ${georchestra.gateway.services.console.target}
+          predicates:
+          - Path=/console/**
+        - id: geonetwork
+          uri: ${georchestra.gateway.services.geonetwork.target}
+          predicates:
+          - Path=/geonetwork/**
+          filters:
+          - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_FIRST
+          - name: CookieAffinity
+            args:
+              name: XSRF-TOKEN
+              from: /geonetwork
+              to: /datahub
+          - name: CookieAffinity
+            args:
+              name: XSRF-TOKEN
+              from: /geonetwork
+              to: /metadata-editor
+          metadata:
+            cors:
+              allowedOrigins: '*'
+              allowedMethods:
+                - GET
+                - POST
+              allowedHeaders: '*'
+              maxAge: 30
+        - id: geoserver
+          uri: ${georchestra.gateway.services.geoserver.target}
+          predicates:
+          - Path=/geoserver/**
+        - id: datahub
+          uri: ${georchestra.gateway.services.datahub.target}
+          predicates:
+          - Path=/datahub/**
+        - id: metadata-editor
+          uri: ${georchestra.gateway.services.metadata-editor.target}
+          predicates:
+          - Path=/metadata-editor/**
+        - id: datafeeder-backend
+          uri: ${georchestra.gateway.services.datafeeder-backend.target}
+          predicates:
+          - Path=/datafeeder-backend/**,/openapi.json
+          filters:
+            - RewritePath=/datafeeder-backend/(?<segment>.*),/$\{segment}
+        - id: datafeeder-frontend
+          uri: ${georchestra.gateway.services.datafeeder-frontend.target}
+          predicates:
+          - Path=/dataset/**
+          filters:
+          # https://github.com/spring-cloud/spring-cloud-gateway/issues/1748
+          - RewritePath=/dataset,/dataset/
+        - id: maelstro-backend
+          uri: ${georchestra.gateway.services.maelstro-backend.target}
+          predicates:
+          - Path=/maelstro-backend/**
+        - id: maesltro
+          uri: ${georchestra.gateway.services.maelstro.target}
+          predicates:
+          - Path=/maelstro/**
+
+georchestra.gateway.services:
+  console.target: http://${CONSOLE_HOST:console}:8080/console/
+  datahub.target: http://${DATAHUB_HOST:datahub}:80/datahub/
+  metadata-editor.target: http://${METADATA_EDITOR_HOST:metadata-editor}:80/metadata-editor/
+  geonetwork.target: http://${GEONETWORK_HOST:geonetwork}:8080/geonetwork/
+  geoserver.target: http://${GEOSERVER_HOST:geoserver}:8080/geoserver/
+  datafeeder-frontend.target: http://${DATAFEEDER_FRONTEND_HOST}:8080/
+  datafeeder-backend.target: http://${DATAFEEDER_BACKEND_HOST}:8000/
+  maelstro-backend.target: http://${MAELSTRO_HOST}:8000/
+  maelstro.target: http://${MAELSTRO_FRONT_HOST}:8080/

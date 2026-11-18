@@ -4,14 +4,14 @@ set -euo pipefail
 task_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 required=(
   compose.yaml
-  config/georchestra/default.properties
-  config/georchestra/gateway/gateway.yaml
-  config/georchestra/gateway/routes.yaml
-  config/georchestra/datafeeder/datafeeder.env
+  config/default.properties
+  config/gateway/gateway.yaml
+  config/gateway/routes.yaml
+  config/datafeeder/datafeeder.env
   config/database/datafeeder-init.sql
   config/maelstro/config.yaml
-  env/common.env
-  env/database-georchestra.env
+  envs/common.env
+  envs/database-georchestra.env
   resources/caddy/etc/Caddyfile
   secrets/slapd_password.txt
   fixtures/psc_antenne.sql

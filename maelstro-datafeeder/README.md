@@ -166,7 +166,7 @@ dedicated `datadb` database for staging and final dataset tables. The local
 executor runs ingestion jobs inside the backend container and is intended only
 for development and demonstrations.
 
-Configuration is stored under `config/georchestra/datafeeder/`. The
+Configuration is stored under `config/datafeeder/`. The
 `armoires.zip` fixture can be uploaded through the wizard, and the bootstrap
 loads `psc.antennes` into `datadb` as a database-import fixture.
 
