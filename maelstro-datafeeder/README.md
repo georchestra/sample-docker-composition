@@ -145,9 +145,9 @@ trusted explicitly.
   `compose.local.yaml` publishes Caddy on 8443 and PostGIS on 5433.
 - Maelstro's initialization utilities still address the legacy hostname
   `proxy`; the local composition adds it as a Gateway network alias.
-- With SQLAlchemy 2.1, Maelstro currently attempts to load `psycopg` v3 although
-  its project dependency declares `psycopg2-binary`. `make up` installs the v3
-  driver in the development container as a temporary workaround.
+- Maelstro PR #202 explicitly selects the installed `psycopg2` driver. `make up`
+  first checks whether the backend is healthy and only installs `psycopg` v3 as
+  a temporary fallback when an older published image still requires it.
 
 These workarounds should be revisited before the composition is considered
 portable and complete.
