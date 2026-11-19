@@ -24,21 +24,24 @@ done
 
 # Initialize the field used by GeoNetwork's default sort so an empty catalog
 # can load without displaying a search error before its first record is added.
+# GeoNetwork may already have created the index, so keep this step idempotent.
 "${compose}" exec -T elasticsearch sh -c '
-  curl --silent --show-error --fail \
-    --request PUT http://localhost:9200/gn-records \
-    --header "Content-Type: application/json" \
-    -u "elastic:$ELASTIC_PASSWORD" -v \
-    --data '\''{"mappings":{"properties":{"createDate":{"type":"date"}}}}'\''
- ' >/dev/null
-
-"${compose}" exec -T elasticsearch sh -c '
+  if curl --silent --show-error --fail --head \
+    -u "elastic:$ELASTIC_PASSWORD" \
+    http://localhost:9200/gn-records >/dev/null; then
     curl --silent --show-error --fail \
-   --request PUT http://localhost:9200/gn-records/_mapping \
-   --header "Content-Type: application/json" \
-   -u "elastic:$ELASTIC_PASSWORD" -v \
-   --data '\''{"properties":{"createDate":{"type":"date"}}}'\''
- '   >/dev/null
+      --request PUT http://localhost:9200/gn-records/_mapping \
+      --header "Content-Type: application/json" \
+      -u "elastic:$ELASTIC_PASSWORD" \
+      --data '\''{"properties":{"createDate":{"type":"date"}}}'\''
+  else
+    curl --silent --show-error --fail \
+      --request PUT http://localhost:9200/gn-records \
+      --header "Content-Type: application/json" \
+      -u "elastic:$ELASTIC_PASSWORD" \
+      --data '\''{"mappings":{"properties":{"createDate":{"type":"date"}}}}'\''
+  fi
+' >/dev/null
 
 
 if ! "${compose}" exec -T datadb psql -U postgres -d postgres -Atc \
