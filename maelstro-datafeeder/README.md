@@ -113,6 +113,9 @@ cp .env.example .env
 Set the destination GeoNetwork, GeoServer and Datafeeder URLs together with
 `DESTINATION_LOGIN` and `DESTINATION_PASSWORD` in `.env`. Docker Compose
 injects them only into the Maelstro backend; the credentials and deployment
+URLs are not committed. During metadata migration, the configured XSL
+transformation replaces the local public GeoServer URL with
+`DESTINATION_GEOSERVER_URL`, so service links resolve on the target platform.
 URLs are not stored in the application configuration or committed to Git.
 
 `DESTINATION` is available both as a read-only source and as a destination.
