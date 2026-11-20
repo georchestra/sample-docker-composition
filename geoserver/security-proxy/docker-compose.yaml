@@ -15,8 +15,11 @@ services:
     image: georchestra/geoserver:latest
     environment:
     - GEOSERVER_CSRF_DISABLED=true
+    - JAVA_OPTIONS=-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005
     volumes:
     - ./datadir:/etc/georchestra
+    ports:
+    - "5005:5005"
   proxy:
     image: georchestra/security-proxy:latest
     ports:
