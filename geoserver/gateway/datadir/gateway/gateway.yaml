@@ -1,0 +1,106 @@
+# Default georchestra gateway specific configuration, always imported from application.yml
+# configure target base URL's, headers and role based access, per service name.
+# Replaces security-proxy's targets-mapping.properties, headers-mapping.properties, and security-mappings.xml
+#
+spring.config.import: application.yaml, security.yaml, routes.yaml, roles-mappings.yaml
+
+georchestra:
+  gateway:
+    # This allows to use /login?=redirect=... to redirect to a specific URL after a successful login
+    # (if the URL is in the allow list below)
+    # Disabled by default for security reasons (open redirect vulnerability)
+    # loginRedirectAllowList: >
+    #   https://localhost/datahub/,
+    #   https://localhost/geoserver/,
+    #   https://localhost/console/,
+    #   https://localhost/mapstore/,
+    #   https://localhost/import/,
+    #   https://localhost/geonetwork/
+    # Redirection URL after a successful logout : Defaults to /?logout
+    # logoutUrl : "/?logout" 
+    default-headers:
+      # Default security headers to append to proxied requests
+      proxy: true
+      username: true
+      roles: true
+      org: true
+      orgname: true
+    global-access-rules:
+    - intercept-url: /testPage
+      anonymous: false
+      allowed-roles: USER
+    - intercept-url:
+      - "/**"
+      - "/proxy/?url=*"
+      anonymous: true
+    services:
+      console:
+        target: ${georchestra.gateway.services.console.target}
+        access-rules:
+        - intercept-url:
+          - /console/public/**
+          - /console/manager/public/**
+          #/console/account resources are private except account/new and account/passwordRecovery
+          - /console/account/new
+          - /console/account/newPassword
+          - /console/account/passwordRecovery
+          - /console/account/js/**
+          - /console/account/css/**
+          - /console/account/fonts/**
+          - /console/testPage
+          anonymous: true
+        - intercept-url:
+          - /console/private/**
+          - /console/manager/**
+          - /console/*/emails
+          - /console/*/sendEmail # /console/sendEmail features are reserved to SUPERUSER & delegated admins
+          - /console/*/emailTemplates
+          - /console/attachments
+          allowed-roles: SUPERUSER,ORGADMIN
+        - intercept-url: /console/emailProxy #activated for members having the EMAILPROXY role
+          allowed-roles: EMAILPROXY
+        - intercept-url: /console/internal/**
+          allowed-roles: SUPERUSER
+        - intercept-url: /console/account/**
+          anonymous: false
+      geonetwork:
+        target: ${georchestra.gateway.services.geonetwork.target}
+        headers:
+          proxy: true
+          username: false
+          roles: false
+          org: false
+          orgname: true
+          json-user: true
+      geoserver:
+        target: ${georchestra.gateway.services.geoserver.target}
+      datafeeder-backend:
+        target: ${georchestra.gateway.services.datafeeder-backend.target}
+        access-rules:
+        - intercept-url: /datafeeder-backend/internal/**
+          anonymous: false
+          allowed-roles: ADMINISTRATOR
+        - intercept-url: /datafeeder-backend**, /datafeeder-backend/**
+          anonymous: false
+          allowed-roles: IMPORT
+      datafeeder-frontend:
+        target: ${georchestra.gateway.services.datafeeder-frontend.target}
+        access-rules:
+        - intercept-url: /dataset**, /dataset/**
+          anonymous: false
+          allowed-roles: IMPORT
+        headers:
+          json-user: true
+          json-organization: true
+      maelstro-backend:
+        target: ${georchestra.gateway.services.maelstro-backend.target}
+        access-rules:
+        - intercept-url: /maelstro-backend/**
+          anonymous: false
+          allowed-roles: SUPERUSER
+      maelstro:
+        target: ${georchestra.gateway.services.maelstro.target}
+        access-rules:
+        - intercept-url: /maelstro/**
+          anonymous: false
+          allowed-roles: SUPERUSER

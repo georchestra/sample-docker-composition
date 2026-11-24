@@ -1,0 +1,113 @@
+# File included by gateway.yaml to set up the spring-gateway's routes
+# target service URL's are defined in gateway.yaml (e.g. georchestra.gateway.services.<service>.target)
+
+spring:
+  cloud:
+    gateway:
+     server:
+       webflux:
+        routes:
+        - id: root
+          uri: ${georchestra.gateway.services.datahub.target}
+          predicates:
+          - Path=/
+          filters:
+          - RedirectTo=308, /datahub/
+        - id: console
+          uri: ${georchestra.gateway.services.console.target}
+          predicates:
+          - Path=/console/**
+        - id: geonetwork
+          uri: ${georchestra.gateway.services.geonetwork.target}
+          predicates:
+          - Path=/geonetwork/**
+          filters:
+          - DedupeResponseHeader=Access-Control-Allow-Origin, RETAIN_FIRST
+          - name: CookieAffinity
+            args:
+              name: XSRF-TOKEN
+              from: /geonetwork
+              to: /datahub
+          - name: CookieAffinity
+            args:
+              name: XSRF-TOKEN
+              from: /geonetwork
+              to: /metadata-editor
+          metadata:
+            cors:
+              allowedOrigins: '*'
+              allowedMethods:
+                - GET
+                - POST
+              allowedHeaders: '*'
+              maxAge: 30
+        - id: geoserver
+          uri: ${georchestra.gateway.services.geoserver.target}
+          predicates:
+          - Path=/geoserver/**
+        - id: geowebcache
+          uri: ${georchestra.gateway.services.geowebcache.target}
+          predicates:
+          - Path=/geowebcache/**
+        - id: mapstore
+          uri: ${georchestra.gateway.services.mapstore.target}
+          predicates:
+          - Path=/mapstore/**
+        - id: datahub
+          uri: ${georchestra.gateway.services.datahub.target}
+          predicates:
+          - Path=/datahub/**
+        - id: metadata-editor
+          uri: ${georchestra.gateway.services.metadata-editor.target}
+          predicates:
+          - Path=/metadata-editor/**
+        - id: datafeeder-backend
+          uri: ${georchestra.gateway.services.datafeeder-backend.target}
+          predicates:
+          - Path=/datafeeder-backend/**,/openapi.json
+          filters:
+            - RewritePath=/datafeeder-backend/(?<segment>.*),/$\{segment}
+        - id: datafeeder-frontend
+          uri: ${georchestra.gateway.services.datafeeder-frontend.target}
+          predicates:
+          - Path=/dataset/**
+          filters:
+          # https://github.com/spring-cloud/spring-cloud-gateway/issues/1748
+          - RewritePath=/dataset,/dataset/
+        - id: airflow
+          uri: ${georchestra.gateway.services.airflow.target}
+          predicates:
+          - Path=/airflow/**
+        - id: gaia
+          uri: ${georchestra.gateway.services.gaia.target}
+          predicates:
+          - Path=/gaia/**
+        - id: maelstro-backend
+          uri: ${georchestra.gateway.services.maelstro-backend.target}
+          predicates:
+          - Path=/maelstro-backend/**
+        - id: maesltro
+          uri: ${georchestra.gateway.services.maelstro.target}
+          predicates:
+          - Path=/maelstro/**
+        - id: external-proxy
+          uri: ${georchestra.gateway.services.external-proxy.target}
+          predicates:
+          - Path=/proxy/**
+
+georchestra.gateway.services:
+  console.target: http://${CONSOLE_HOST:console}:8080/console/
+  datahub.target: http://${DATAHUB_HOST:datahub}:80/datahub/
+  metadata-editor.target: http://${METADATA_EDITOR_HOST:metadata-editor}:80/metadata-editor/
+  geonetwork.target: http://${GEONETWORK_HOST:geonetwork}:8080/geonetwork/
+  geoserver.target: http://${GEOSERVER_HOST:geoserver}:8080/geoserver/
+  geowebcache.target: http://${GEOWEBCACHE_HOST:geowebcache}:8080/geowebcache/
+  mapstore.target: http://${MAPSTORE_HOST:mapstore}:8080/mapstore/
+  ogc-api-records.target: http://${OGC_API_RECORDS_HOST:ogc-api-records}:8080/ogc-api-records/
+  datafeeder-backend.target: http://${DATAFEEDER_BACKEND:datafeeder-backend}:8000/
+  datafeeder-frontend.target: http://${DATAFEEDER_FRONTEND:datafeeder-frontend}:8080/
+  airflow.target: http://airflow-apiserver:8081/airflow
+  gaia.target: http://${GAIA_BACK_HOST:gaia-back}:5002/gaia/
+  maelstro-backend.target: http://${MAELSTRO_BACKEND_HOST:maelstro-back}:8000/
+  maelstro.target: http://${MAELSTRO_FRONT_HOST:maelstro-front}:8080/maelstro/
+  external-proxy.target: http://external-proxy:8080/proxy
