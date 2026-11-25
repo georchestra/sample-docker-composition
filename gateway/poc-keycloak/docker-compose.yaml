@@ -16,7 +16,7 @@ volumes:
   geoserver_native_libs:
   geonetwork_datadir:
   esdata:
-  datadb_data:
+  datadb_pg18:
 
 secrets:
   slapd_password:
@@ -42,10 +42,14 @@ services:
       KC_HOSTNAME: http://localhost:8180
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       KC_HEALTH_ENABLED: "true"
+      # link of the logos of the georchestra login / account theme
+      GEORCHESTRA_URL: http://localhost:8080/
     volumes:
       # Keycloak database (dev H2), persisted: the realm is only imported when it does not exist yet
       - keycloak_data:/opt/keycloak/data/h2
       - ./keycloak/georchestra-realm.json:/opt/keycloak/data/import/georchestra-realm.json:ro
+      # georchestra theme (also in the image): mounted to edit it live, start-dev disables the theme cache
+      - ./keycloak/themes/georchestra:/opt/keycloak/themes/georchestra:ro
     ports:
       - "8180:8080"
     healthcheck:
@@ -92,7 +96,7 @@ services:
     volumes:
       - ./datadir:/etc/georchestra
     environment:
-      - JAVA_TOOL_OPTIONS=-Dgeorchestra.datadir=/etc/georchestra
+      - JAVA_TOOL_OPTIONS= -Dgeorchestra.datadir=/etc/georchestra
     env_file:
       - ./envs/.envs-common
       - ./envs/.envs-ldap
@@ -238,13 +242,13 @@ services:
   # backend container.
 
   datadb:
-    image: postgis/postgis
+    image: postgis/postgis:18-3.6
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: postgres
     volumes:
-      - datadb_data:/var/lib/postgresql/data
+      - datadb_pg18:/var/lib/postgresql
     configs:
       - source: datadb_init_sql
         target: /docker-entrypoint-initdb.d/init.sql

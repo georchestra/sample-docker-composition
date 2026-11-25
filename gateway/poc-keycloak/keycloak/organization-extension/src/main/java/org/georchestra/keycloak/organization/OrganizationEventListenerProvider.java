@@ -25,7 +25,9 @@ import org.keycloak.models.utils.KeycloakModelUtils;
  * <li>a user added to a group by an admin: if it is an organization, it becomes the user's
  * only organization and the attribute follows
  * <li>a user removed from a group by an admin, a login (LDAP changes, ProConnect SIRET
- * mappers), a registration: the attribute follows the groups
+ * mappers): the attribute follows the groups
+ * <li>a registration (organization chosen in the form, or set by the ProConnect mappers), a
+ * profile update by the user (first choice of an organization): the groups follow the attribute
  * <li>a group created or updated by an admin: an organization gets its code and is written to
  * LDAP, the options of the organization dropdown follow
  * </ul>
@@ -49,9 +51,12 @@ public class OrganizationEventListenerProvider implements EventListenerProvider 
         if (event.getUserId() == null) {
             return;
         }
-        if (event.getType() == EventType.LOGIN || event.getType() == EventType.REGISTER) {
+        if (event.getType() == EventType.LOGIN) {
             afterCommit(session, config, event.getRealmId(), null, event.getUserId(),
                     (sync, user) -> sync.groupsToAttribute(user));
+        } else if (event.getType() == EventType.REGISTER || event.getType() == EventType.UPDATE_PROFILE) {
+            afterCommit(session, config, event.getRealmId(), null, event.getUserId(),
+                    (sync, user) -> sync.attributeToGroups(user));
         }
     }
 

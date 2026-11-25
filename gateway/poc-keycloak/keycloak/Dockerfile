@@ -2,6 +2,7 @@
 # - the organization extension (event listener "georchestra-organization")
 # - an admin console patched with an "Est un organisme" checkbox in the group
 #   create / edit dialog (admin-ui/*.patch, sets the isOrganization group attribute)
+# - the geOrchestra login / account theme (themes/georchestra)
 ARG KEYCLOAK_VERSION=26.8.1
 
 # --- organization extension
@@ -42,3 +43,7 @@ FROM keycloak
 ARG KEYCLOAK_VERSION
 COPY --from=extension /build/target/georchestra-organization.jar /opt/keycloak/providers/georchestra-organization.jar
 COPY --from=admin-ui /work/admin-ui.jar /opt/keycloak/lib/lib/main/org.keycloak.keycloak-admin-ui-${KEYCLOAK_VERSION}.jar
+COPY themes/georchestra /opt/keycloak/themes/georchestra
+# pre-create the H2 dir owned by keycloak (uid 1000), otherwise a fresh named volume
+# mounted there is root-owned and Keycloak cannot write its database
+RUN mkdir -p /opt/keycloak/data/h2

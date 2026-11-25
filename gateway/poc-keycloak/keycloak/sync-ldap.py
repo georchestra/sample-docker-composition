@@ -234,11 +234,15 @@ def sync_organization_attribute(token):
     profile = call("GET", f"{base}/users/profile", token)
     attribute = {
         "name": ORG_ATTRIBUTE,
-        "displayName": "Organisme",
+        "displayName": "${organization}",
         "multivalued": False,
-        "permissions": {"view": ["admin", "user"], "edit": ["admin"]},
-        "annotations": {"inputType": "select", "inputOptionLabels": labels},
-        "validations": {"options": {"options": names}} if names else {},
+        # editable by the user at registration; afterwards the validator of the extension
+        # refuses a change outside of the admin contexts
+        "permissions": {"view": ["admin", "user"], "edit": ["admin", "user"]},
+        "annotations": {"inputType": "select", "inputOptionLabels": labels,
+                        "inputHelperTextAfter": "${organizationHelp}"},
+        "validations": {**({"options": {"options": names}} if names else {}),
+                        "georchestra-organization-locked": {}},
     }
     others = [a for a in profile["attributes"] if a["name"] != ORG_ATTRIBUTE]
     current = next((a for a in profile["attributes"] if a["name"] == ORG_ATTRIBUTE), None)

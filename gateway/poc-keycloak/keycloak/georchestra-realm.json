@@ -2,9 +2,17 @@
   "realm": "georchestra",
   "enabled": true,
   "sslRequired": "none",
-  "registrationAllowed": false,
+  "registrationAllowed": true,
   "loginWithEmailAllowed": true,
-  "resetPasswordAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginTheme": "georchestra",
+  "accountTheme": "georchestra",
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "fr",
+    "en"
+  ],
+  "defaultLocale": "fr",
   "browserFlow": "browser_otp",
   "components": {
     "org.keycloak.storage.UserStorageProvider": [

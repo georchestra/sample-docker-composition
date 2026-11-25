@@ -44,6 +44,9 @@ class OrganizationSync {
 
     private static final int CODE_MAX_LENGTH = 64;
 
+    /** Label of the organization dropdown, a message of the georchestra themes */
+    static final String DISPLAY_NAME = "${organization}";
+
     private final KeycloakSession session;
     private final RealmModel realm;
     private final String attribute;
@@ -378,14 +381,21 @@ class OrganizationSync {
         UPConfig config = provider.getConfiguration();
         UPAttribute attr = config.getAttribute(attribute);
         if (attr == null) {
-            attr = new UPAttribute(attribute, new UPAttributePermissions(Set.of("admin", "user"), Set.of("admin")));
-            attr.setDisplayName("Organisme");
+            attr = new UPAttribute(attribute);
             attr.setMultivalued(false);
         }
+        // editable by the user (registration, first choice), changes are then refused by the
+        // validator outside of the admin contexts
+        UPAttributePermissions permissions = new UPAttributePermissions(Set.of("admin", "user"),
+                Set.of("admin", "user"));
+        boolean permissionsChanged = attr.getPermissions() == null
+                || !permissions.getView().equals(attr.getPermissions().getView())
+                || !permissions.getEdit().equals(attr.getPermissions().getEdit());
         Map<String, Object> annotations = attr.getAnnotations() == null ? new HashMap<>()
                 : new HashMap<>(attr.getAnnotations());
         annotations.put("inputType", "select");
         annotations.put("inputOptionLabels", labels);
+        annotations.put("inputHelperTextAfter", "${organizationHelp}");
         Map<String, Map<String, Object>> validations = attr.getValidations() == null ? new HashMap<>()
                 : new HashMap<>(attr.getValidations());
         if (codes.isEmpty()) {
@@ -393,9 +403,14 @@ class OrganizationSync {
         } else {
             validations.put("options", Map.of("options", codes));
         }
-        if (annotations.equals(attr.getAnnotations()) && validations.equals(attr.getValidations())) {
+        validations.put(OrganizationLockedValidator.ID, Map.of());
+        if (!permissionsChanged && DISPLAY_NAME.equals(attr.getDisplayName())
+                && annotations.equals(attr.getAnnotations())
+                && validations.equals(attr.getValidations())) {
             return;
         }
+        attr.setDisplayName(DISPLAY_NAME);
+        attr.setPermissions(permissions);
         attr.setAnnotations(annotations);
         attr.setValidations(validations);
         config.addOrReplaceAttribute(attr);

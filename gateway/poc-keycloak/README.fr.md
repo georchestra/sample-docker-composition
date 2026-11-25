@@ -154,6 +154,32 @@ simples n'y vont jamais). `keycloak-ldap-sync` importe les organismes du LDAP
 (marqués automatiquement : un groupe non marqué qui a un code vient du LDAP) et
 leurs membres, déclare la liste déroulante et la remplit.
 
+### Thème geOrchestra (connexion, inscription, compte)
+
+Thème `georchestra` (`keycloak/themes/georchestra/`, copié dans l'image et monté
+en volume pour l'éditer à chaud, `start-dev` désactivant le cache des thèmes) :
+
+- **login** (parent `keycloak.v2`, PatternFly 5) : `template.ftl` ajoute un
+  panneau de marque à gauche (masqué sur mobile), `register.ftl` regroupe les
+  champs en sections (Compte, Identité, Organisme), prénom/nom côte à côte ;
+  couleurs dans `resources/css/georchestra.css` (clair et sombre). Les autres
+  pages (mot de passe oublié, OTP, mise à jour du profil…) héritent du gabarit.
+- **account** (parent `keycloak.v3`, application React de Keycloak) : logo, titre
+  et couleurs seulement (`theme.properties`, `resources/css/georchestra.css`).
+
+Le lien des logos vient de `GEORCHESTRA_URL` (variable du service keycloak).
+Realm : `loginTheme`/`accountTheme` = `georchestra`, inscription et mot de passe
+oublié activés, français par défaut (+ anglais).
+
+**Organisme à l'inscription** : l'attribut `organization` est éditable par
+l'utilisateur (liste déroulante du formulaire d'inscription), puis verrouillé par
+le validateur `georchestra-organization-locked` de l'extension : hors contextes
+admin, inscription et revue IdP, un utilisateur qui a déjà un organisme ne peut
+plus le changer (message `organizationLocked`). Les permissions Keycloak ne
+dépendent pas du contexte, d'où ce validateur. À l'inscription (événement
+`REGISTER`) et à la mise à jour du profil (`UPDATE_PROFILE`), le groupe
+d'organisme suit l'attribut.
+
 ### Persistance
 
 La base de Keycloak (H2 de dev) est conservée dans le volume `keycloak_data`. Le
