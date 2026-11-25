@@ -1,7 +1,12 @@
+volumes:
+  smtp_maildir:
+
 services:
 
   database:
     image: georchestra/database:latest
+    ports:
+      - "5432:5432"
 
   ldap:
     image: georchestra/ldap:latest
@@ -11,7 +16,8 @@ services:
         hard: "1024"
 
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.3
+#    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.13
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.13
     environment:
       discovery.type: single-node
       xpack.security.enabled: false
@@ -23,7 +29,8 @@ services:
         reservations:
           memory: 4096M
   geonetwork:
-    image: georchestra/geonetwork:latest
+#    image: georchestra/geonetwork:4.4.10-georchestra-00-RC2-dev
+    image: fnecasc2c/geonetwork:4.4.13-georchestra-00
     environment:
     - PGHOST=database
     - PGPORT=5432
@@ -43,6 +50,13 @@ services:
     ports:
     - "5005:5005"
 
+  metadata-editor:
+    image: geonetwork/geonetwork-ui-metadata-editor:latest
+    environment:
+      CUSTOM_SCRIPTS_DIRECTORY: /etc/georchestra/metadata-editor/scripts
+    volumes:
+      - ./datadir/:/etc/georchestra
+
   console:
     image: georchestra/console:latest
     volumes:
@@ -59,3 +73,22 @@ services:
       - ./datadir:/etc/georchestra:ro
     ports:
     - 8080:8080
+
+  smtp:
+    image: camptocamp/smtp-sink:latest
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+
+  courier-imap:
+    image: camptocamp/courier-imap:latest
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+  webmail:
+    image: camptocamp/sqwebmail:latest
+    environment:
+      - IMAP_HOSTNAME=courier-imap
+      - SMTP_HOSTNAME=smtp-sink
+    volumes:
+      - smtp_maildir:/home/smtp/Maildir/
+    ports:
+      - "8081:80"
