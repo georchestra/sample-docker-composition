@@ -1,0 +1,48 @@
+# Gateway configuration for the Keycloak POC.
+# Imports the other files of this directory.
+spring.config.import: application.yaml, security.yaml, routes.yaml, roles-mappings.yaml
+
+georchestra:
+  gateway:
+    default-headers:
+      proxy: true
+      username: true
+      roles: true
+      org: true
+      orgname: true
+    global-access-rules:
+    - intercept-url:
+      - "/**"
+      anonymous: true
+    services:
+      whoami:
+        target: ${georchestra.gateway.services.whoami.target}
+      geonetwork:
+        target: ${georchestra.gateway.services.geonetwork.target}
+        headers:
+          proxy: true
+          username: false
+          roles: false
+          org: false
+          orgname: true
+          json-user: true
+      geoserver:
+        target: ${georchestra.gateway.services.geoserver.target}
+      datafeeder-backend:
+        target: ${georchestra.gateway.services.datafeeder-backend.target}
+        access-rules:
+        - intercept-url: /datafeeder-backend/internal/**
+          anonymous: false
+          allowed-roles: ADMINISTRATOR
+        - intercept-url: /datafeeder-backend**, /datafeeder-backend/**
+          anonymous: false
+          allowed-roles: IMPORT
+      datafeeder-frontend:
+        target: ${georchestra.gateway.services.datafeeder-frontend.target}
+        access-rules:
+        - intercept-url: /dataset**, /dataset/**
+          anonymous: false
+          allowed-roles: IMPORT
+        headers:
+          json-user: true
+          json-organization: true

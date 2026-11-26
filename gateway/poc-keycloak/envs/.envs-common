@@ -1,0 +1,4 @@
+# envs-common
+FQDN=localhost
+SMTPHOST=smtp
+SMTPPORT=25
