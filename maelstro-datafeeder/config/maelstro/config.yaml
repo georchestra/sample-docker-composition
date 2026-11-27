@@ -57,6 +57,13 @@ destinations:
       url: "${DESTINATION_DATAFEEDER_URL}"
       login: "${DESTINATION_LOGIN}"
       password: "${DESTINATION_PASSWORD}"
+    transformations:
+      - rewrite_geoserver_url
+
+transformations:
+  rewrite_geoserver_url:
+    xsl_path: "/etc/maelstro/transformations/rewrite-geoserver-url.xsl"
+    description: "Rewrite source GeoServer links for the destination platform"
 
 db_logging:
   host: "${PGHOST}"

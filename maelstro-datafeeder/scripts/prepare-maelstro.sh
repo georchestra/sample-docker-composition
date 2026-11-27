@@ -10,6 +10,7 @@ required=(
   config/datafeeder/datafeeder.env
   config/database/datafeeder-init.sql
   config/maelstro/config.yaml
+  config/maelstro/transformations/rewrite-geoserver-url.xsl
   envs/common.env
   envs/database-georchestra.env
   resources/caddy/etc/Caddyfile
