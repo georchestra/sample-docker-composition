@@ -299,7 +299,7 @@ services:
         {"LOCAL_FIXTURES":{"type":"copy","connection_string":"postgresql://postgres:mypassword@datadb:5432/postgres","label":"Local fixtures"}}
       GEOSERVER_INTERNAL_URL: http://gateway:8080/geoserver
       GEONETWORK_INTERNAL_URL: http://gateway:8080/geonetwork
-      CONSOLE_INTERNAL_URL: http://gateway:8080/console
+      CONSOLE_INTERNAL_URL: http://console:8080/console
       DATA_PUBLIC_URL: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}/geoserver
       DATAHUB_PUBLIC_URL: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}/datahub/dataset/{metadata_id}
       METADATA_PUBLIC_URL: https://georchestra-127-0-0-1.nip.io:${CADDY_HTTPS_PORT:-8443}/geonetwork
